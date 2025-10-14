@@ -1,8 +1,8 @@
 import Layout from "../../Layout";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useGetUsersQuery, useToggleBlockUserMutation } from "../../redux/queries/userApi";
-import { Search, Crown, Users, Lock, Unlock } from "lucide-react";
+import { useGetUsersQuery } from "../../redux/queries/userApi";
+import { Search, Crown, Users } from "lucide-react";
 import Badge from "../../components/Badge";
 import { Separator } from "../../components/ui/separator";
 import Loader from "../../components/Loader";
@@ -44,7 +44,7 @@ function Customers() {
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useGetUsersQuery<any>({ pageNumber: page, keyword: searchQuery });
-  const [toggleBlockUser] = useToggleBlockUserMutation();
+  // const [toggleBlockUser] = useToggleBlockUserMutation();
 
   const users = data?.users || [];
   const pages = data?.pages || 1;
@@ -62,9 +62,6 @@ function Customers() {
     }
   }, [data, searchQuery]);
 
-  const handleToggleBlockUser = async (id: any) => {
-    const res = await toggleBlockUser(id);
-  };
   return (
     <Layout>
       {isLoading ? (

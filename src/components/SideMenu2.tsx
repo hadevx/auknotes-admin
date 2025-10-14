@@ -1,19 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import clsx from "clsx";
-import {
-  ShoppingBasket,
-  Box,
-  Boxes,
-  Users,
-  TicketPercent,
-  LogOut,
-  Truck,
-  Settings,
-  Menu,
-  X,
-  Loader2Icon,
-  ScrollText,
-} from "lucide-react";
+import { Box, Boxes, Users, LogOut, Settings, Menu, X, Loader2Icon } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/slices/authSlice";
 import { useLogoutMutation } from "../redux/queries/userApi";

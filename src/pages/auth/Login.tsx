@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { EyeOff, Eye } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useLoginUserMutation } from "../../redux/queries/userApi";
@@ -6,12 +6,12 @@ import { useDispatch } from "react-redux";
 import { setUserInfo } from "../../redux/slices/authSlice";
 import { toast } from "react-toastify";
 import Spinner from "../../components/Spinner";
-import { StoreContext } from "../../StorenameContext";
+// import { StoreContext } from "../../StorenameContext";
 import { clsx } from "clsx";
 import { validateLogin } from "../../validation/userSchema";
 
 function Login() {
-  const storeName = useContext(StoreContext);
+  // const storeName = useContext(StoreContext);
 
   const [showPassword, setShowPassword] = useState(false);
   const togglePasswordVisibility = () => setShowPassword(!showPassword);

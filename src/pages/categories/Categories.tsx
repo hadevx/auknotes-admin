@@ -36,7 +36,7 @@ function Categories() {
   const [isFeatured, setIsFeatured] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterType, setFilterType] = useState("all");
+  // const [filterType, setFilterType] = useState("all");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
 
