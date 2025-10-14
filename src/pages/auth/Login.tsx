@@ -58,7 +58,7 @@ function Login() {
 
   return (
     <div className="flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 min-h-screen text-black">
-      <h1 className="mb-5 text-2xl font-semibold">Login to {storeName}</h1>
+      <h1 className="mb-5 text-2xl font-semibold uppercase">auknotes</h1>
       <form onSubmit={handleLogin} className="w-[300px]">
         {/* Email */}
         <div className="h-[40px] bg-opacity-50 rounded-md bg-gray-100 flex items-center mb-4">

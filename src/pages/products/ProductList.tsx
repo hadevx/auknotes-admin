@@ -1,11 +1,11 @@
-import { useState, type JSX } from "react";
+import { useState } from "react";
 import Layout from "../../Layout";
 import {
-  useGetProductsQuery,
   useUploadProductFileMutation,
   useCreateProductMutation,
-  useGetCategoriesTreeQuery,
   useDeleteProductMutation,
+  useGetAllCoursesQuery,
+  useGetProductsByCourseQuery,
 } from "../../redux/queries/productApi";
 import Badge from "../../components/Badge";
 import { Box, Plus, Download, Trash2, Edit } from "lucide-react";
@@ -18,54 +18,40 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { texts } from "./translation";
-import Error from "@/components/Error";
-import Paginate from "@/components/Paginate";
 
 function ProductList() {
-  const [page, setPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
 
-  console.log(pdfFile);
   const language = useSelector((state: any) => state.language.lang);
 
-  const {
-    data: productsData,
-    isLoading: loadingProducts,
-    error: errorGettingProducts,
-  } = useGetProductsQuery({
-    pageNumber: page,
+  // Fetch all courses
+  const { data: courses, isLoading: loadingCourses } = useGetAllCoursesQuery(undefined);
+  const [selectedCourse, setSelectedCourse] = useState<string>(courses?.[0]?._id || "");
+
+  // Fetch products by selected course
+  const { data: products, isLoading: loadingProducts } = useGetProductsByCourseQuery({
+    courseId: selectedCourse,
   });
 
-  const products = productsData?.products || [];
-  const pages = productsData?.pages || 1;
-
-  const { data: tree } = useGetCategoriesTreeQuery(undefined);
   const [deleteProduct] = useDeleteProductMutation();
+  const [uploadProductFile, { isLoading: loadingUploadImage }] = useUploadProductFileMutation();
+  const [createProduct, { isLoading: loadingCreateProduct }] = useCreateProductMutation();
 
-  console.log(products);
-  /* Create product fields */
   const [name, setName] = useState<string>("");
-  const [price, setPrice] = useState<number | undefined>(undefined);
-  const [category, setCategory] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [course, setCourse] = useState<string>("");
   const [type, setType] = useState<string>("");
 
-  const [uploadProductFile, { isLoading: loadingUploadImage }] = useUploadProductFileMutation();
-  const [createProduct, { isLoading: loadingCreateOrder }] = useCreateProductMutation();
-
-  // ✅ Group products by category
-  const groupedProducts = products?.reduce((acc: any, product: any) => {
-    const categoryName = product.category?.name || "Uncategorized";
-    if (!acc[categoryName]) acc[categoryName] = [];
-    acc[categoryName].push(product);
-    return acc;
-  }, {});
+  const resetForm = () => {
+    setName("");
+    setCourse("");
+    setType("");
+    setPdfFile(null);
+  };
 
   const handleCreateProduct = async () => {
     let uploadedFile: { url: string; publicId: string; size: number } | null = null;
@@ -87,54 +73,39 @@ function ProductList() {
       }
     }
 
-    const newProduct = {
-      name,
-      price,
-      file: uploadedFile,
-      category,
-      description,
-      type,
-    };
-
     try {
-      const result = await createProduct(newProduct);
-      if ("error" in result) {
-        toast.error("Error creating product");
-      } else {
-        toast.success("Product created");
-        setIsModalOpen(false);
-        resetForm();
-      }
+      await createProduct({
+        name,
+        course,
+        type,
+        file: uploadedFile,
+      }).unwrap();
+      toast.success("Product created successfully");
+      setIsModalOpen(false);
+      resetForm();
     } catch {
       toast.error("Failed to create product");
     }
   };
 
-  const resetForm = () => {
-    setName("");
-    setPrice(undefined);
-    setCategory("");
-    setDescription("");
-    setType("");
-  };
-
   const handleDeleteProduct = async (productId: string) => {
-    await deleteProduct(productId);
-    toast.success(language === "ar" ? "تم حذف المنتج بنجاح" : "Product deleted successfully");
+    try {
+      await deleteProduct(productId).unwrap();
+      toast.success(language === "ar" ? "تم حذف المنتج بنجاح" : "Product deleted successfully");
+    } catch {
+      toast.error(language === "ar" ? "فشل حذف المنتج" : "Failed to delete product");
+    }
   };
-  const handleUpdateProduct = async (productId: string) => {};
 
   return (
     <Layout>
-      {errorGettingProducts ? (
-        <Error />
-      ) : loadingProducts ? (
+      {loadingProducts || loadingCourses ? (
         <Loader />
       ) : (
         <div className="px-4 flex lg:w-4xl flex-col w-full min-h-screen lg:min-h-auto py-3 mt-[70px]">
           {/* Header */}
           <div className="w-full">
-            <div className={`flex justify-between items-center flex-wrap gap-3`} dir="rtl">
+            <div className="flex justify-between items-center flex-wrap gap-3">
               <h1
                 dir={language === "ar" ? "rtl" : "ltr"}
                 className="text-lg lg:text-2xl font-black flex gap-2 lg:gap-5 items-center flex-wrap">
@@ -142,15 +113,14 @@ function ProductList() {
                 <Badge icon={false}>
                   <Box />
                   <p className="text-lg lg:text-sm">
-                    {productsData?.total ?? 0}{" "}
-                    <span className="hidden lg:inline">{texts[language].products}</span>
+                    {/* {total} <span className="hidden lg:inline">{texts[language].products}</span> */}
                   </p>
                 </Badge>
               </h1>
 
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-black drop-shadow-[0_0_10px_rgba(24,24,27,0.5)] cursor-pointer hover:bg-black/70 text-white font-bold flex items-center gap-1 text-sm lg:text-md shadow-md px-3 py-2 rounded-md">
+                className="bg-black text-white font-bold flex items-center gap-1 text-sm lg:text-md shadow-md px-3 py-2 rounded-md hover:bg-black/70 transition">
                 <Plus />
                 {texts[language].addProduct}
               </button>
@@ -158,85 +128,86 @@ function ProductList() {
 
             <Separator className="my-4 bg-black/20" />
 
-            {/* ✅ Tabs with grouped products */}
-            <Tabs defaultValue={Object.keys(groupedProducts || {})[0]} className="w-full">
-              <TabsList className="flex flex-wrap gap-2 bg-gray-100 rounded-lg ">
-                {Object.keys(groupedProducts || {}).map((category) => (
-                  <TabsTrigger
-                    key={category}
-                    value={category}
-                    className="p-5 uppercase rounded-md text-sm border-black font-medium data-[state=active]:bg-black data-[state=active]:text-white">
-                    {category}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              {Object.entries(groupedProducts || {}).map(([category, items]: any) => (
-                <TabsContent key={category} value={category} className="mt-4">
-                  <div className="rounded-lg border lg:p-5 bg-white overflow-x-auto">
-                    <table className="w-full lg:min-w-[700px] rounded-lg border-gray-200 text-sm text-left text-gray-700">
-                      <thead className="bg-white text-gray-900/50 font-semibold">
-                        <tr>
-                          <th className="p-4 border-b">{texts[language].name}</th>
-                          {/* <th className="px-4 py-3 border-b">{texts[language].price}</th> */}
-                          <th className="p-4 border-b ">{texts[language].type}</th>
-                          <th className="p-4 border-b ">{texts[language].size}</th>
-                          <th className="p-4 border-b text-center">{texts[language].actions}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
-                        {items.map((p: any) => (
-                          <tr key={p._id}>
-                            <td className="p-4 font-semibold">{p.name}</td>
-                            <td className=" font-semibold ">{p.type}</td>
-                            <td className=" font-semibold ">
-                              {/* File Size */}
-                              {p.size && (
-                                <span className="text-xs text-gray-400 mt-1 block">
-                                  {p.size < 1024 * 1024
-                                    ? `${(p.size / 1024).toFixed(2)} KB`
-                                    : `${(p.size / 1024 / 1024).toFixed(2)} MB`}
-                                </span>
-                              )}
-                            </td>
-                            {/* <td className="px-4 py-4">{p.price ? `${p.price} KD` : "-"}</td> */}
-                            <td className="px-4 py-4 flex justify-center gap-2">
-                              {p.file?.url && (
-                                <a
-                                  target="_blank"
-                                  href={p.file.url}
-                                  download
-                                  className="text-black hover:bg-zinc-200 bg-zinc-100  p-2 rounded-md text-sm">
-                                  <Download className="h-5 w-5" />
-                                </a>
-                              )}
-                              <button
-                                onClick={() => handleDeleteProduct(p._id)}
-                                className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
-                                <Trash2 className="h-5 w-5" />
-                              </button>
-                              <button
-                                onClick={() => handleUpdateProduct(p._id)}
-                                className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
-                                <Edit className="h-5 w-5" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </TabsContent>
+            {/* Course Filters */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              {courses?.map((c: any) => (
+                <button
+                  key={c._id}
+                  onClick={() => {
+                    setSelectedCourse(c._id);
+                  }}
+                  className={`px-3 py-1 rounded-full border ${
+                    selectedCourse === c._id
+                      ? "bg-black text-white"
+                      : "bg-white text-black hover:bg-gray-100"
+                  }`}>
+                  {c.code}
+                </button>
               ))}
-            </Tabs>
+            </div>
 
-            {/* Pagination */}
-            <Paginate page={page} pages={pages} setPage={setPage} />
+            {/* Product Table */}
+            <div className="rounded-lg border lg:p-5 bg-white overflow-x-auto">
+              <table className="w-full lg:min-w-[700px] rounded-lg border-gray-200 text-sm text-left text-gray-700">
+                <thead className="bg-white text-gray-900/50 font-semibold">
+                  <tr>
+                    <th className="p-4 border-b">{texts[language].name}</th>
+                    <th className="p-4 border-b">{texts[language].type}</th>
+                    <th className="p-4 border-b">{texts[language].size}</th>
+                    <th className="p-4 border-b text-center">{texts[language].actions}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {products?.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center p-5 text-gray-400">
+                        No products found
+                      </td>
+                    </tr>
+                  ) : (
+                    products?.map((p: any) => (
+                      <tr key={p._id}>
+                        <td className="p-4 font-semibold">{p.name}</td>
+                        <td className="font-semibold">{p.type}</td>
+                        <td className="font-semibold">
+                          {p?.size && (
+                            <span className="text-xs text-gray-400 mt-1 block">
+                              {p?.size < 1024 * 1024
+                                ? `${(p?.size / 1024).toFixed(2)} KB`
+                                : `${(p?.size / 1024 / 1024).toFixed(2)} MB`}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 flex justify-center gap-2">
+                          {p.file?.url && (
+                            <a
+                              target="_blank"
+                              href={p.file.url}
+                              download
+                              className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
+                              <Download className="h-5 w-5" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => handleDeleteProduct(p._id)}
+                            className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                          <button className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
+                            <Edit className="h-5 w-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Create product modal */}
+      {/* Create Product Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="flex flex-col">
           <DialogHeader>
@@ -246,10 +217,11 @@ function ProductList() {
           <div className="flex-1 overflow-y-auto mt-4 space-y-4">
             <input
               type="file"
-              accept="application/pdf"
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
               className="p-2 w-full border rounded-md"
             />
+
             <input
               type="text"
               placeholder={texts[language].productName}
@@ -257,22 +229,23 @@ function ProductList() {
               onChange={(e) => setName(e.target.value)}
               className="p-2 w-full border rounded-md"
             />
-            <textarea
-              placeholder={texts[language].productDescription}
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="p-2 w-full border rounded-md"
-            />
 
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={course}
+              onChange={(e) => setCourse(e.target.value)}
               className="p-2 w-full border rounded-md">
               <option value="" disabled>
                 {texts[language].selectCategory}
               </option>
-              {tree?.length > 0 && renderCategoryOptions(tree)}
+              {loadingCourses ? (
+                <option>Loading...</option>
+              ) : (
+                courses?.map((c: any) => (
+                  <option key={c._id} value={c._id}>
+                    {c.code}
+                  </option>
+                ))
+              )}
             </select>
 
             <select
@@ -293,11 +266,11 @@ function ProductList() {
           <DialogFooter className="mt-6 flex justify-end gap-2">
             <Button
               variant="default"
-              disabled={loadingCreateOrder || loadingUploadImage}
+              disabled={loadingCreateProduct || loadingUploadImage}
               onClick={handleCreateProduct}>
               {loadingUploadImage
                 ? texts[language].uploading
-                : loadingCreateOrder
+                : loadingCreateProduct
                 ? texts[language].creating
                 : texts[language].create}
             </Button>
@@ -307,16 +280,5 @@ function ProductList() {
     </Layout>
   );
 }
-
-// Recursively render category options for dropdown
-const renderCategoryOptions = (nodes: any, level = 0): JSX.Element[] => {
-  return nodes.flatMap((node: any) => [
-    <option key={node._id} value={node._id}>
-      {"‣ ".repeat(level)}
-      {node.name}
-    </option>,
-    ...(node.children ? renderCategoryOptions(node.children, level + 1) : []),
-  ]);
-};
 
 export default ProductList;

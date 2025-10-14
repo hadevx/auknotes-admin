@@ -115,26 +115,6 @@ function SideMenu() {
       <div className="flex flex-col lg:justify-start h-full">
         <div className="flex flex-col gap-3  max-h-[calc(100vh-300px)]">
           <Link
-            to="/admin/summary"
-            onClick={() => setIsMenuOpen(false)}
-            className={clsx(
-              "flex gap-3 hover:bg-white px-3 py-2 rounded-lg hover:shadow transition-all duration-300",
-              pathname === "/admin/summary" && "bg-white shadow"
-            )}>
-            <ScrollText strokeWidth={1} />
-            <p>{t.summary}</p>
-          </Link>
-          <Link
-            to="/admin"
-            onClick={() => setIsMenuOpen(false)}
-            className={clsx(
-              "flex gap-3 hover:bg-white px-3 py-2 rounded-lg hover:shadow transition-all duration-300",
-              (pathname === "/admin" || pathname.startsWith("/admin/orders")) && "bg-white shadow"
-            )}>
-            <ShoppingBasket strokeWidth={1} />
-            <p>{t.orders}</p>
-          </Link>
-          <Link
             to="/admin/productlist"
             onClick={() => setIsMenuOpen(false)}
             className={clsx(
@@ -164,26 +144,7 @@ function SideMenu() {
             <Users strokeWidth={1} />
             <p>{t.customers}</p>
           </Link>
-          <Link
-            to="/admin/discounts"
-            onClick={() => setIsMenuOpen(false)}
-            className={clsx(
-              "flex gap-3 hover:bg-white px-3 py-2 rounded-lg hover:shadow transition-all duration-300",
-              pathname.startsWith("/admin/discounts") && "bg-white shadow"
-            )}>
-            <TicketPercent strokeWidth={1} />
-            <p>{t.discounts}</p>
-          </Link>
-          <Link
-            to="/admin/delivery"
-            onClick={() => setIsMenuOpen(false)}
-            className={clsx(
-              "flex gap-3 hover:bg-white px-3 py-2 rounded-lg hover:shadow transition-all duration-300",
-              pathname === "/admin/delivery" && "bg-white shadow"
-            )}>
-            <Truck strokeWidth={1} />
-            <p>{t.delivery}</p>
-          </Link>
+
           <Link
             to="/admin/settings"
             onClick={() => setIsMenuOpen(false)}

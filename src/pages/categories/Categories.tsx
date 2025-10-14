@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import Layout from "../../Layout";
 import {
-  useCreateCategoryMutation,
-  useDeleteCategoryMutation,
-  useGetCategoriesQuery,
-  useGetCategoriesTreeQuery,
+  useCreateCourseMutation,
+  useDeleteCourseMutation,
+  useGetCoursesQuery,
+  useUploadCourseImageMutation,
+  useUpdateCourseMutation,
 } from "../../redux/queries/productApi";
 import { toast } from "react-toastify";
 import Badge from "../../components/Badge";
@@ -20,115 +21,84 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { clsx } from "clsx";
-import CategoryTree from "./CategoryTree";
-import {
-  useGetProductsQuery,
-  useUploadCategoryImageMutation,
-  useUpdateCategoryMutation,
-} from "../../redux/queries/productApi";
 import { useSelector } from "react-redux";
 import Paginate from "@/components/Paginate";
 import { Switch } from "@/components/ui/switch";
 
 function Categories() {
-  const [uploadCategoryImage] = useUploadCategoryImageMutation();
+  const [uploadCategoryImage] = useUploadCourseImageMutation();
   const language = useSelector((state: any) => state.language.lang);
+
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [deletingCategoryId, setDeletingCategoryId] = useState(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [category, setCategory] = useState("");
-  const [parent, setParent] = useState("");
-  const [featured, setFeatured] = useState(false);
+  const [course, setCourse] = useState("");
+  const [isFeatured, setIsFeatured] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryError, setCategoryError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterType, setFilterType] = useState("all");
-
-  console.log(featured);
-
-  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
 
-  const { refetch: refetchProducts } = useGetProductsQuery(undefined);
-
-  const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
-  const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation();
+  const [updateCourse, { isLoading: isUpdating }] = useUpdateCourseMutation();
+  const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
+  const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
 
   const {
     data,
     isLoading: isLoadingCategories,
     refetch,
-  } = useGetCategoriesQuery({
+  } = useGetCoursesQuery({
     pageNumber: page || 1,
     keyword: searchTerm || "",
   });
 
-  const { data: tree, refetch: refetchTree } = useGetCategoriesTreeQuery(undefined);
-
-  const categories = data?.categories || [];
+  const categories = data?.courses || [];
   const pages = data?.pages || 1;
   console.log(categories);
   const labels: any = {
     en: {
-      categories: "Categories",
-      totalCategories: "categories",
-      addCategory: "Add new Category",
-      searchPlaceholder: "Search categories...",
-      allCategories: "All Categories",
-      mainCategories: "Main Categories",
-      subCategories: "Subcategories",
-      tableName: "Name",
+      categories: "Courses",
+      totalCategories: "courses",
+      addCategory: "Add new Course",
+      searchPlaceholder: "Search courses...",
+      allCategories: "All",
+      mainCategories: "Main",
+      subCategories: "Sub",
+      tableName: "Code",
       tableParent: "Parent",
       tableActions: "Actions",
-      noCategoriesFound: "No categories found.",
-      noParent: "No Parent (Main Category)",
-      enterCategoryName: "Enter category name",
+      noCategoriesFound: "No courses found.",
+      enterCategoryName: "Enter course code",
       cancel: "Cancel",
       create: "Create",
       creating: "Creating...",
-      pleaseEnterName: "Please enter a valid category name.",
-      categoryExists: "This category already exists.",
-      subOf: "Sub of",
-      main: "Main",
     },
     ar: {
-      categories: "الفئات",
-      totalCategories: "فئة",
-      addCategory: "إضافة فئة جديدة",
-      searchPlaceholder: "ابحث عن الفئات...",
-      allCategories: "جميع الفئات",
-      mainCategories: "الفئات الرئيسية",
-      subCategories: "الفئات الفرعية",
-      tableName: "الاسم",
+      categories: "الدورات",
+      totalCategories: "دورة",
+      addCategory: "إضافة دورة جديدة",
+      searchPlaceholder: "ابحث عن دورة...",
+      allCategories: "الكل",
+      mainCategories: "رئيسية",
+      subCategories: "فرعية",
+      tableName: "الكود",
       tableParent: "الرئيسية",
       tableActions: "الاجراءات",
-      noCategoriesFound: "لم يتم العثور على أي فئات.",
-      noParent: "بدون رئيسية (فئة رئيسية)",
-      enterCategoryName: "أدخل اسم الفئة",
+      noCategoriesFound: "لم يتم العثور على أي دورة.",
+      enterCategoryName: "أدخل كود الدورة",
       cancel: "إلغاء",
       create: "إنشاء",
       creating: "جارٍ الإنشاء...",
-      pleaseEnterName: "يرجى إدخال اسم فئة صالح.",
-      categoryExists: "هذه الفئة موجودة بالفعل.",
-      subOf: "فرعي من",
-      main: "رئيسية",
     },
   };
   const t = labels[language];
 
-  const filteredCategories = categories
-    .filter((cat: any) => cat.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter((cat: any) => {
-      if (filterType === "main") return !cat.parent;
-      if (filterType === "sub") return !!cat.parent;
-      return true;
-    });
-
+  // ─── Create Category ───────────────────────────────────────────
   const handleCreateCategory = async () => {
-    if (!category.trim()) {
-      setCategoryError(true);
-      return toast.error(t.pleaseEnterName);
+    if (!course.trim()) {
+      toast.error(t.enterCategoryName);
+      return;
     }
 
     let uploadedImageUrl = null;
@@ -137,7 +107,7 @@ function Categories() {
         const formData = new FormData();
         formData.append("image", imageFile);
         const res = await uploadCategoryImage(formData).unwrap();
-        uploadedImageUrl = res.image.imageUrl; // only URL
+        uploadedImageUrl = res.image.imageUrl;
       } catch (error: any) {
         toast.error(error?.data?.message || error?.error);
         return;
@@ -145,38 +115,69 @@ function Categories() {
     }
 
     try {
-      await createCategory({
-        name: category[0].toUpperCase() + category.slice(1).toLowerCase(),
-        parent: parent || null,
+      await createCourse({
+        code: course,
         image: uploadedImageUrl,
-        featured,
       }).unwrap();
 
-      toast.success(t.create + " " + t.categories + " successfully.");
-      setCategory("");
-      setParent("");
+      toast.success("Course created successfully.");
+      setCourse("");
       setImageFile(null);
       setIsModalOpen(false);
       refetch();
-      refetchTree();
-      refetchProducts();
     } catch (error) {
-      toast.error(t.categoryExists);
+      toast.error("Course already exists or failed to create.");
     }
   };
 
-  const handleDeleteCategory = async (id: any, name: any) => {
+  // ─── Delete Category ───────────────────────────────────────────
+  const handleDeleteCategory = async (id: string) => {
     setDeletingCategoryId(id);
     try {
-      await deleteCategory({ name }).unwrap();
-      toast.success(t.categories + " deleted successfully.");
+      await deleteCourse(id).unwrap();
+      toast.success("Course deleted successfully.");
       refetch();
-      refetchTree();
-      refetchProducts();
-    } catch (error) {
-      toast.error("Error deleting " + t.categories);
+    } catch {
+      toast.error("Error deleting course");
     } finally {
       setDeletingCategoryId(null);
+    }
+  };
+
+  // ─── Update Category ───────────────────────────────────────────
+  const handleUpdateCategory = async () => {
+    if (!editingCategory) return;
+
+    let uploadedImageUrl = editingCategory?.image || null;
+
+    if (imageFile) {
+      try {
+        const formData = new FormData();
+        formData.append("image", imageFile);
+        const res = await uploadCategoryImage(formData).unwrap();
+        uploadedImageUrl = res.image.imageUrl;
+      } catch (error: any) {
+        toast.error(error?.data?.message || error?.error);
+        return;
+      }
+    }
+
+    try {
+      await updateCourse({
+        id: editingCategory._id,
+        code: course,
+        image: uploadedImageUrl,
+        isFeatured,
+      }).unwrap();
+
+      toast.success("Course updated successfully!");
+      setCourse("");
+      setImageFile(null);
+      setEditingCategory(null);
+      setIsEditModalOpen(false);
+      refetch();
+    } catch {
+      toast.error("Failed to update course");
     }
   };
 
@@ -189,7 +190,8 @@ function Categories() {
       {isLoadingCategories ? (
         <Loader />
       ) : (
-        <div className="px-4 mb-10 py-3 mt-[70px] lg:mt-[50px] w-full lg:w-4xl min-h-screen lg:min-h-auto">
+        <div className="px-4 mb-10 py-3 mt-[70px] lg:mt-[50px] w-full lg:max-w-4xl min-h-screen">
+          {/* Header */}
           <div
             className={`flex justify-between items-center ${
               language === "ar" ? "flex-row-reverse" : ""
@@ -205,76 +207,60 @@ function Categories() {
                 </p>
               </Badge>
             </h1>
+
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-black drop-shadow-[0_0_10px_rgba(24,24,27,0.5)] hover:bg-black/70 transition-all duration-300 text-white font-bold flex items-center gap-1 text-sm lg:text-md shadow-md px-3 py-2 rounded-md">
+              className="bg-black hover:bg-black/70 text-white font-bold flex items-center gap-1 text-sm lg:text-md shadow-md px-3 py-2 rounded-md transition-all duration-300">
               <Plus /> {t.addCategory}
             </button>
           </div>
 
           <Separator className="my-4 bg-black/20" />
 
-          <div className="mt-5 mb-2 overflow-hidden">
-            <div className="flex flex-row lg:flex-row items-center lg:items-center gap-3 mb-5">
-              <div className="relative w-full lg:w-64">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                  <Search className="h-5 w-5" />
-                </span>
-                <input
-                  type="text"
-                  placeholder={t.searchPlaceholder}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full border bg-white border-gray-300 rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
-                />
-              </div>
-
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="border bg-white border-gray-300 rounded-lg py-3 px-4 text-sm outline-none focus:border-blue-500">
-                <option value="all">{t.allCategories}</option>
-                <option value="main">{t.mainCategories}</option>
-                <option value="sub">{t.subCategories}</option>
-              </select>
+          {/* Search + Filter */}
+          <div className="flex flex-col lg:flex-row items-center gap-3 mb-5">
+            <div className="relative w-full lg:w-64">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                <Search className="h-5 w-5" />
+              </span>
+              <input
+                type="text"
+                placeholder={t.searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full border bg-white border-gray-300 rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
+              />
             </div>
+          </div>
 
-            <div className="rounded-lg border p-5 lg:p-5 bg-white">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="bg-white text-gray-900/50 font-semibold ">
-                  <tr>
-                    <th className="pb-2 border-b">{t.tableName}</th>
-                    <th className=" border-b">{t.tableParent}</th>
-                    <th className=" border-b">{t.tableActions}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {filteredCategories.length > 0 ? (
-                    filteredCategories.map((cat: any) => (
-                      <tr key={cat._id} className="font-bold transition-all duration-300">
-                        <td className="flex items-center gap-2">
-                          {cat.image && (
-                            <img
-                              src={cat.image}
-                              alt={cat.name}
-                              className="w-10 h-10 object-cover rounded-md"
-                            />
-                          )}
-                          <span className="uppercase">{cat.name}</span>
-                        </td>
-                        <td className="">
-                          {cat.parent?.name ? (
-                            <span className="text-gray-500 text-sm">
-                              {t.subOf} {cat.parent.name}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-gray-500">{t.main}</span>
-                          )}
-                        </td>
-                        <td className="py-2 flex gap-2">
+          {/* Table */}
+          <div className="rounded-lg border p-5 bg-white">
+            <table className="w-full text-sm text-left text-gray-700">
+              <thead className="bg-white text-gray-900/50 font-semibold">
+                <tr>
+                  <th className="pb-2 border-b">{t.tableName}</th>
+                  <th className="border-b">{t.tableActions}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {categories?.length > 0 ? (
+                  categories?.map((cat: any) => (
+                    <tr key={cat._id} className="font-bold">
+                      <td className="flex items-center gap-2 py-2">
+                        {cat.image && (
+                          <img
+                            src={cat.image}
+                            alt={cat.code}
+                            className="size-20 object-cover rounded-md"
+                          />
+                        )}
+                        <span className="uppercase">{cat.code}</span>
+                      </td>
+                      <td className="">
+                        <div className="flex gap-2">
                           <button
                             disabled={isDeleting && deletingCategoryId === cat._id}
-                            onClick={() => handleDeleteCategory(cat._id, cat.name)}
+                            onClick={() => handleDeleteCategory(cat._id)}
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-lg transition-all duration-300 flex items-center justify-center min-w-[32px] min-h-[32px]">
                             {isDeleting && deletingCategoryId === cat._id ? (
                               <Loader2Icon className="animate-spin" />
@@ -283,79 +269,56 @@ function Categories() {
                             )}
                           </button>
                           <button
-                            disabled={isDeleting && deletingCategoryId === cat._id}
                             onClick={() => {
                               setEditingCategory(cat);
-                              setCategory(cat.name);
-                              setParent(cat.parent?._id || "");
-                              setImageFile(null);
+                              setCourse(cat.code);
                               setIsEditModalOpen(true);
                             }}
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-lg transition-all duration-300 flex items-center justify-center min-w-[32px] min-h-[32px]">
                             <SquarePen />
                           </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="px-4 py-6 text-center text-gray-500">
-                        {t.noCategoriesFound}
+                        </div>
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-              <Paginate page={page} pages={pages} setPage={setPage} />
-            </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-6 text-center text-gray-500">
+                      {t.noCategoriesFound}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <Paginate page={page} pages={pages} setPage={setPage} />
           </div>
-
-          {tree && <CategoryTree data={tree} />}
         </div>
       )}
 
+      {/* ─── Create Modal ─────────────────────────────────────────── */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t.addCategory}</DialogTitle>
           </DialogHeader>
 
-          {/* Category Name */}
           <input
             type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
             placeholder={t.enterCategoryName}
             className={clsx(
-              "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2",
-              categoryError ? "border-rose-500 border-2" : "border-gray-300"
+              "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
             )}
           />
 
-          {/* Parent Category */}
-          <select
-            className="w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 my-2"
-            value={parent}
-            onChange={(e) => setParent(e.target.value)}>
-            <option value="">{t.noParent}</option>
-            {categories.map((cat: any) => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Image Upload */}
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) setImageFile(e.target.files[0]);
-            }}
+            onChange={(e) => e.target.files && setImageFile(e.target.files[0])}
             className="p-4 w-full border rounded-md mb-2"
           />
 
-          {/* Image Preview */}
           {imageFile && (
             <div className="mb-2 flex flex-col items-start gap-1">
               <p className="text-sm">Preview:</p>
@@ -367,7 +330,6 @@ function Categories() {
             </div>
           )}
 
-          {/* Footer Buttons */}
           <DialogFooter className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               {t.cancel}
@@ -378,53 +340,31 @@ function Categories() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Edit Modal ─────────────────────────────────────────── */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Category</DialogTitle>
+            <DialogTitle>Edit Course</DialogTitle>
           </DialogHeader>
 
-          {/* Category Name */}
           <input
             type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
             placeholder={t.enterCategoryName}
             className={clsx(
-              "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2",
-              categoryError ? "border-rose-500 border-2" : "border-gray-300"
+              "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
             )}
           />
-          {/* Featured */}
-          <div className="flex items-center">
-            <Switch checked={featured} onCheckedChange={setFeatured} />
-            <label className="ml-2 text-sm text-gray-700 cursor-pointer">Featured</label>
-          </div>
 
-          {/* Parent Category */}
-          <select
-            className="w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 my-2"
-            value={parent}
-            onChange={(e) => setParent(e.target.value)}>
-            <option value="">{t.noParent}</option>
-            {categories.map((cat: any) => (
-              <option key={cat._id} value={cat._id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Image Upload */}
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) setImageFile(e.target.files[0]);
-            }}
+            onChange={(e) => e.target.files && setImageFile(e.target.files[0])}
             className="p-4 w-full border rounded-md mb-2"
           />
 
-          {/* Image Preview (existing + new if uploaded) */}
           {(editingCategory?.image || imageFile) && (
             <div className="mb-2 flex flex-col items-start gap-1">
               <p className="text-sm">Preview:</p>
@@ -435,56 +375,16 @@ function Categories() {
               />
             </div>
           )}
+          <div className="flex items-center gap-2">
+            <label htmlFor="">Featured</label>
+            <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
+          </div>
 
-          {/* Footer Buttons */}
           <DialogFooter className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
               {t.cancel}
             </Button>
-            <Button
-              variant="default"
-              disabled={isUpdating}
-              onClick={async () => {
-                if (!category.trim()) {
-                  setCategoryError(true);
-                  return toast.error(t.pleaseEnterName);
-                }
-
-                let uploadedImageUrl = editingCategory?.image || null;
-                if (imageFile) {
-                  try {
-                    const formData = new FormData();
-                    formData.append("image", imageFile);
-                    const res = await uploadCategoryImage(formData).unwrap();
-                    uploadedImageUrl = res.image.imageUrl;
-                  } catch (error: any) {
-                    toast.error(error?.data?.message || error?.error);
-                    return;
-                  }
-                }
-
-                try {
-                  await updateCategory({
-                    id: editingCategory._id,
-                    name: category[0].toUpperCase() + category.slice(1).toLowerCase(),
-                    parent: parent || null,
-                    image: uploadedImageUrl,
-                    featured,
-                  }).unwrap();
-
-                  toast.success("Category updated successfully!");
-                  setCategory("");
-                  setParent("");
-                  setImageFile(null);
-                  setEditingCategory(null);
-                  setIsEditModalOpen(false);
-                  refetch();
-                  refetchTree();
-                  refetchProducts();
-                } catch (error) {
-                  toast.error("Failed to update category");
-                }
-              }}>
+            <Button variant="default" disabled={isUpdating} onClick={handleUpdateCategory}>
               {isUpdating ? "Updating..." : "Update"}
             </Button>
           </DialogFooter>

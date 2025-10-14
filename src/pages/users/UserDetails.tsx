@@ -135,6 +135,13 @@ function UserDetails() {
                 {/* Name */}
                 <div className="flex flex-col">
                   <span className="text-gray-400 text-sm">
+                    {language === "ar" ? "اليوزر:" : "Username:"}
+                  </span>
+                  <span className="mt-1 font-semibold text-gray-700">{user?.username}@</span>
+                </div>
+                {/* Name */}
+                <div className="flex flex-col">
+                  <span className="text-gray-400 text-sm">
                     {language === "ar" ? "الاسم:" : "Name:"}
                   </span>
                   <span className="mt-1 font-semibold text-gray-700">{user?.name}</span>
