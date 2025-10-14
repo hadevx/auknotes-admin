@@ -31,7 +31,7 @@ function ProductList() {
 
   // Fetch all courses
   const { data: courses, isLoading: loadingCourses } = useGetAllCoursesQuery(undefined);
-  const [selectedCourse, setSelectedCourse] = useState<string>(courses?.[0]?._id || "");
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
 
   // Fetch products by selected course
   const { data: products, isLoading: loadingProducts } = useGetProductsByCourseQuery({
@@ -105,7 +105,7 @@ function ProductList() {
         <div className="px-4 flex lg:w-4xl flex-col w-full min-h-screen lg:min-h-auto py-3 mt-[70px]">
           {/* Header */}
           <div className="w-full">
-            <div className="flex justify-between items-center flex-wrap gap-3">
+            <div className="flex justify-between items-center flex-wrap gap-3" dir="rtl">
               <h1
                 dir={language === "ar" ? "rtl" : "ltr"}
                 className="text-lg lg:text-2xl font-black flex gap-2 lg:gap-5 items-center flex-wrap">
@@ -113,7 +113,8 @@ function ProductList() {
                 <Badge icon={false}>
                   <Box />
                   <p className="text-lg lg:text-sm">
-                    {/* {total} <span className="hidden lg:inline">{texts[language].products}</span> */}
+                    {products?.length}{" "}
+                    <span className="hidden lg:inline">{texts[language].products}</span>
                   </p>
                 </Badge>
               </h1>
@@ -129,21 +130,20 @@ function ProductList() {
             <Separator className="my-4 bg-black/20" />
 
             {/* Course Filters */}
-            <div className="flex flex-wrap gap-2 mb-5">
-              {courses?.map((c: any) => (
-                <button
-                  key={c._id}
-                  onClick={() => {
-                    setSelectedCourse(c._id);
-                  }}
-                  className={`px-3 py-1 rounded-full border ${
-                    selectedCourse === c._id
-                      ? "bg-black text-white"
-                      : "bg-white text-black hover:bg-gray-100"
-                  }`}>
-                  {c.code}
-                </button>
-              ))}
+            <div className="mb-5">
+              <select
+                value={selectedCourse || ""}
+                onChange={(e) => setSelectedCourse(e.target.value)}
+                className="w-full sm:w-60 px-4 py-2 border rounded-lg bg-white text-gray-800 shadow-sm focus:ring-2 focus:ring-black focus:border-black outline-none">
+                <option value="" disabled>
+                  Select a course
+                </option>
+                {courses?.map((c: any) => (
+                  <option key={c._id} value={c._id}>
+                    {c.code}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Product Table */}
