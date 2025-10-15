@@ -119,7 +119,7 @@ function Customers() {
                         <tr
                           key={user._id}
                           className="cursor-pointer hover:bg-gray-100 transition-all duration-300 font-bold"
-                          onClick={() => navigate(`/admin/userlist/${user._id}`)}>
+                          onClick={() => navigate(`/userlist/${user._id}`)}>
                           <td className="px-4 py-5">{user.name}</td>
                           <td className="px-4 py-5">{user.email}</td>
                           {/* <td className="px-4 py-5">{user.phone}</td> */}
