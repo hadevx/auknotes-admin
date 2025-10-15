@@ -12,10 +12,9 @@ export default function ForgotPassword() {
     setLoading(true);
     setMessage("");
     try {
-      const { data } = await axios.post(
-        "https://backend.webschema.online/api/users/forget-password",
-        { email }
-      );
+      const { data } = await axios.post("https://backend.auknotes.com/api/users/forget-password", {
+        email,
+      });
       setMessage(data.message);
     } catch (err: any) {
       setMessage(err.response?.data?.message || "Error sending reset link");
