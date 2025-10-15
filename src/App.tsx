@@ -27,36 +27,29 @@ function App() {
       <Route
         path="/"
         element={
-          adminUserInfo ? (
-            <Navigate to="/admin/productlist" replace />
-          ) : (
-            <Navigate to="/admin/login" replace />
-          )
+          adminUserInfo ? <Navigate to="/productlist" replace /> : <Navigate to="/login" replace />
         }
       />
 
       {/* Login page */}
-      <Route
-        path="/admin/login"
-        element={adminUserInfo ? <Navigate to="/admin" replace /> : <Login />}
-      />
+      <Route path="/login" element={adminUserInfo ? <Navigate to="/" replace /> : <Login />} />
 
-      <Route path="/admin/unauthorized" element={<Unauthorized />} />
-      <Route path="/admin/forget-password" element={<ForgotPassword />} />
-      <Route path="/admin/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/forget-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* Admin routes */}
-      <Route path="/admin/summary" element={<PrivateRoute element={<Summary />} />} />
+      <Route path="/summary" element={<PrivateRoute element={<Summary />} />} />
       {/* <Route path="/admin" element={<PrivateRoute element={<Order />} />} /> */}
       {/* <Route path="/admin/orders/:orderId" element={<PrivateRoute element={<OrderDetails />} />} /> */}
-      <Route path="/admin/userlist" element={<PrivateRoute element={<UsersList />} />} />
-      <Route path="/admin/userlist/:userID" element={<PrivateRoute element={<UserDetails />} />} />
+      <Route path="/userlist" element={<PrivateRoute element={<UsersList />} />} />
+      <Route path="/userlist/:userID" element={<PrivateRoute element={<UserDetails />} />} />
       {/* <Route path="/admin/delivery" element={<PrivateRoute element={<Delivery />} />} /> */}
-      <Route path="/admin/productlist" element={<PrivateRoute element={<ProductList />} />} />
+      <Route path="/productlist" element={<PrivateRoute element={<ProductList />} />} />
 
       {/* <Route path="/admin/discounts" element={<PrivateRoute element={<Discounts />} />} /> */}
-      <Route path="/admin/settings" element={<PrivateRoute element={<Settings />} />} />
-      <Route path="/admin/categories" element={<PrivateRoute element={<Categories />} />} />
+      <Route path="/settings" element={<PrivateRoute element={<Settings />} />} />
+      <Route path="/categories" element={<PrivateRoute element={<Categories />} />} />
     </Routes>
   );
 }

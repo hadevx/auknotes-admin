@@ -60,7 +60,7 @@ export default function ForgotPassword() {
 
         <div className="mt-4 text-center">
           <Link
-            to="/admin/login"
+            to="/login"
             className="text-blue-500 hover:text-blue-600 text-sm font-medium transition">
             ← Back to Login
           </Link>

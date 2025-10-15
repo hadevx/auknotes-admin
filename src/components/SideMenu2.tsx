@@ -30,7 +30,7 @@ function SideMenu() {
       await logoutApiCall(undefined).unwrap();
       dispatch(logout());
       // toast.success(res.message);
-      navigate("/admin/login");
+      navigate("/login");
       setIsMenuOpen(false);
     } catch (error: any) {
       toast.error(error?.data?.message || "Logout failed");
@@ -102,42 +102,42 @@ function SideMenu() {
       <div className="flex flex-col lg:justify-start h-full">
         <div className="flex flex-col gap-3  max-h-[calc(100vh-300px)]">
           <Link
-            to="/admin/productlist"
+            to="/productlist"
             onClick={() => setIsMenuOpen(false)}
             className={clsx(
               "flex gap-3 hover:bg-white px-3 py-2 rounded-lg hover:shadow transition-all duration-300",
-              pathname.startsWith("/admin/productlist") && "bg-white shadow"
+              pathname.startsWith("/productlist") && "bg-white shadow"
             )}>
             <Box strokeWidth={1} />
             <p>{t.products}</p>
           </Link>
           <Link
-            to="/admin/categories"
+            to="/categories"
             onClick={() => setIsMenuOpen(false)}
             className={clsx(
               "flex gap-3 hover:bg-white px-3 py-2 rounded-lg hover:shadow-[0_0_5px_rgba(0,0,0,0.1)]",
-              pathname === "/admin/categories" && "bg-white shadow-[0_0_5px_rgba(0,0,0,0.1)]"
+              pathname === "/categories" && "bg-white shadow-[0_0_5px_rgba(0,0,0,0.1)]"
             )}>
             <Boxes strokeWidth={1} />
             <p>{t.categories}</p>
           </Link>
           <Link
-            to="/admin/userlist"
+            to="/userlist"
             onClick={() => setIsMenuOpen(false)}
             className={clsx(
               "flex gap-3 hover:bg-white px-3 py-2 rounded-lg hover:shadow transition-all duration-300",
-              pathname.startsWith("/admin/userlist") && "bg-white shadow"
+              pathname.startsWith("/userlist") && "bg-white shadow"
             )}>
             <Users strokeWidth={1} />
             <p>{t.customers}</p>
           </Link>
 
           <Link
-            to="/admin/settings"
+            to="/settings"
             onClick={() => setIsMenuOpen(false)}
             className={clsx(
               "group flex gap-3 hover:bg-white px-3 py-2 rounded-lg hover:shadow transition-all duration-300 ",
-              pathname === "/admin/settings" && "bg-white shadow"
+              pathname === "/settings" && "bg-white shadow"
             )}>
             <Settings
               strokeWidth={1}

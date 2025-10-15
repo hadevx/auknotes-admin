@@ -20,7 +20,7 @@ export default function ResetPassword() {
         { password }
       );
       setMessage(data.message);
-      setTimeout(() => navigate("/admin/login"), 2000);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err: any) {
       setMessage(err.response?.data?.message || "Error resetting password");
     } finally {

@@ -39,7 +39,7 @@ function Login() {
       dispatch(setUserInfo({ ...res }));
       setPassword("");
       setEmail("");
-      navigate("/admin");
+      navigate("/");
     } catch (error: any) {
       if (error?.status === "FETCH_ERROR") {
         toast.error("Server is down. Please try again later.");
