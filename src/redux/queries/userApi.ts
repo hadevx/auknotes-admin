@@ -57,6 +57,12 @@ const userApi = api.injectEndpoints({
         method: "PATCH",
       }),
     }),
+    setToVerified: builder.mutation({
+      query: (id: any) => ({
+        url: `/api/users/verify/${id}`,
+        method: "PATCH",
+      }),
+    }),
   }),
 });
 
@@ -70,4 +76,5 @@ export const {
   useUpdateUserMutation,
   useGetGovernorateQuery,
   useToggleBlockUserMutation,
+  useSetToVerifiedMutation,
 } = userApi;

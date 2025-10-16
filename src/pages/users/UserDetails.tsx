@@ -10,6 +10,7 @@ import {
   useGetUserDetailsQuery,
   useGetUsersQuery,
   useToggleBlockUserMutation,
+  useSetToVerifiedMutation,
 } from "../../redux/queries/userApi";
 import Badge from "../../components/Badge";
 import {
@@ -30,6 +31,7 @@ function UserDetails() {
   const language = useSelector((state: any) => state.language.lang); // 'ar' | 'en'
 
   const [toggleBlockUser] = useToggleBlockUserMutation();
+  const [setToVerified] = useSetToVerifiedMutation();
 
   const {
     data: user,
@@ -74,6 +76,15 @@ function UserDetails() {
       toast.error(err?.data?.message || "Error toggling block status");
     }
   };
+  const handleVerifyUser = async (id: any) => {
+    try {
+      await setToVerified(id).unwrap();
+      refetchUser();
+      toast.success("User Verified");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Error verifying user");
+    }
+  };
   return (
     <Layout>
       {loadingUser ? (
@@ -114,6 +125,25 @@ function UserDetails() {
                     : "Unblock User"
                   : language === "ar"
                   ? "حظر المستخدم"
+                  : "Block User"}
+              </button>
+              <button
+                onClick={async () => {
+                  await handleVerifyUser(userID);
+                  refetch(); // refresh user data after toggle
+                }}
+                className={clsx(
+                  "select-none text-xs lg:text-lg font-bold px-2 lg:px-3 py-2 rounded-lg shadow-md transition-all duration-200",
+                  user?.isVerified
+                    ? "bg-gradient-to-t from-green-600 to-green-500 hover:opacity-85 text-white"
+                    : "bg-gradient-to-t from-rose-500 to-rose-400 hover:opacity-85 text-white"
+                )}>
+                {user?.isVerified
+                  ? language === "ar"
+                    ? "موثق"
+                    : "un User"
+                  : language === "ar"
+                  ? "توثيق"
                   : "Block User"}
               </button>
             </div>
@@ -166,6 +196,20 @@ function UserDetails() {
                   ) : (
                     <Badge icon={false} variant="success" className="px-2 py-1 rounded-full">
                       {language === "ar" ? "غير محظور" : "Not Blocked"}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="text-gray-400 text-sm">
+                    {language === "ar" ? "محظور:" : "Blocked:"}
+                  </span>
+                  {user?.isVerified ? (
+                    <Badge icon={false} variant="success" className="px-2 py-1 rounded-full">
+                      {language === "ar" ? "موثق" : "Verified"}
+                    </Badge>
+                  ) : (
+                    <Badge icon={false} variant="danger" className="px-2 py-1 rounded-full">
+                      {language === "ar" ? "غير موثق" : "Unverified"}
                     </Badge>
                   )}
                 </div>
