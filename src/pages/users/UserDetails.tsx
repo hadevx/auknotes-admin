@@ -1,18 +1,16 @@
 import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Layout from "../../Layout";
 import clsx from "clsx";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 import { Loader2Icon } from "lucide-react";
 import {
-  useGetAddressQuery,
   useDeleteUserMutation,
   useGetUserDetailsQuery,
   useGetUsersQuery,
   useToggleBlockUserMutation,
 } from "../../redux/queries/userApi";
-import { useGetUserOrdersQuery } from "../../redux/queries/orderApi";
 import Badge from "../../components/Badge";
 import {
   Dialog,
@@ -31,7 +29,6 @@ function UserDetails() {
 
   const language = useSelector((state: any) => state.language.lang); // 'ar' | 'en'
 
-  const { data: userOrders } = useGetUserOrdersQuery(userID);
   const [toggleBlockUser] = useToggleBlockUserMutation();
 
   const {
@@ -42,7 +39,6 @@ function UserDetails() {
 
   const [deleteUser, { isLoading: loadingDeleteUser }] = useDeleteUserMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data: userAddress, isLoading: loadingAddress } = useGetAddressQuery<any>(userID);
   const { refetch } = useGetUsersQuery(undefined);
 
   const handleDeleteUser = async () => {
@@ -80,7 +76,7 @@ function UserDetails() {
   };
   return (
     <Layout>
-      {loadingUser || loadingAddress ? (
+      {loadingUser ? (
         <Loader />
       ) : (
         <div
@@ -97,7 +93,7 @@ function UserDetails() {
               {!user?.isAdmin && (
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="select-none lg:text-lg drop-shadow-[0_4px_6px_rgba(236,72,153,0.5)]  bg-gradient-to-t from-rose-500 to-rose-400 text-white px-3 py-2 rounded-lg font-bold  hover:opacity-80">
+                  className="select-none text-xs lg:text-lg  bg-gradient-to-t from-rose-500 to-rose-400 text-white px-2 lg:px-3 py-2 rounded-lg font-bold  hover:opacity-80">
                   {language === "ar" ? "حذف المستخدم" : "Delete User"}
                 </button>
               )}
@@ -107,10 +103,10 @@ function UserDetails() {
                   refetch(); // refresh user data after toggle
                 }}
                 className={clsx(
-                  "select-none lg:text-lg font-bold px-4 py-2 rounded-lg shadow-md transition-all duration-200",
+                  "select-none text-xs lg:text-lg font-bold px-2 lg:px-3 py-2 rounded-lg shadow-md transition-all duration-200",
                   user?.isBlocked
                     ? "bg-gradient-to-t from-green-600 to-green-500 hover:opacity-85 text-white"
-                    : "bg-gradient-to-t from-rose-600 to-rose-500 hover:opacity-85 text-white"
+                    : "bg-gradient-to-t from-rose-500 to-rose-400 hover:opacity-85 text-white"
                 )}>
                 {user?.isBlocked
                   ? language === "ar"
@@ -159,29 +155,6 @@ function UserDetails() {
                   </a>
                 </div>
 
-                {/* Phone */}
-                <div className="flex flex-col">
-                  <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "الهاتف:" : "Phone:"}
-                  </span>
-                  <span className="mt-1 font-semibold text-gray-700">{user?.phone || "-"}</span>
-                </div>
-
-                {/* Admin Status */}
-                <div className="flex flex-col items-start">
-                  <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "مسؤول:" : "Admin:"}
-                  </span>
-                  {user.isAdmin ? (
-                    <Badge icon={false} variant="success" className="px-2 py-1 rounded-full">
-                      {language === "ar" ? "مسؤول" : "Admin"}
-                    </Badge>
-                  ) : (
-                    <Badge icon={false} variant="primary" className="px-2 py-1 rounded-full">
-                      {language === "ar" ? "غير مسؤول" : "Not admin"}
-                    </Badge>
-                  )}
-                </div>
                 <div className="flex flex-col items-start">
                   <span className="text-gray-400 text-sm">
                     {language === "ar" ? "محظور:" : "Blocked:"}
@@ -197,133 +170,6 @@ function UserDetails() {
                   )}
                 </div>
               </div>
-            </section>
-          </div>
-
-          {/* Address */}
-          <div className="bg-white rounded-md p-6 border">
-            <section>
-              <h2 className="text-lg font-bold border-b border-gray-200  mb-5">
-                {language === "ar" ? "العنوان" : "Address"}
-              </h2>
-              {userAddress ? (
-                <div className="grid grid-cols-2 gap-y-4 gap-x-10">
-                  <div className="flex flex-col">
-                    <p className="text-gray-400">
-                      {language === "ar" ? "المحافظة:" : "Governorate:"}
-                    </p>
-                    <p className="font-semibold">{userAddress?.governorate}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">{language === "ar" ? "المدينة:" : "City:"}</p>
-                    <p className="font-semibold">{userAddress?.city}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">{language === "ar" ? "المنطقة:" : "Block:"}</p>
-                    <p className="font-semibold">{userAddress?.block}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">{language === "ar" ? "الشارع:" : "Street:"}</p>
-                    <p className="font-semibold">{userAddress?.street}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">{language === "ar" ? "البيت:" : "House:"}</p>
-                    <p className="font-semibold">{userAddress?.house}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="">
-                  <div>
-                    {language === "ar"
-                      ? "المستخدم لم يقدم عنواناً بعد"
-                      : "User does not provide address yet"}
-                  </div>
-                </div>
-              )}
-            </section>
-          </div>
-
-          {/* Orders */}
-          <div className="bg-white mt-2 rounded-md p-7 border">
-            <section>
-              <h2 className="text-lg flex gap-2 font-bold border-b border-gray-200 pb-2 mb-5">
-                {language === "ar" ? "الطلبات" : "Orders"}
-                <p> {userOrders?.length > 0 && userOrders?.length}</p>
-              </h2>
-              {userOrders?.length > 0 ? (
-                userOrders.map((order: any) => (
-                  <div
-                    dir={language === "ar" ? "rtl" : ""}
-                    key={order._id}
-                    className="flex mb-2 flex-col hover:bg-gray-100 transition-all duration-300 gap-4 border  p-4  rounded-lg w-full">
-                    <Link
-                      to={`/admin/orders/${order._id}`}
-                      className="grid grid-cols-3  md:grid-cols-2 lg:grid-cols-5 gap-3">
-                      <div
-                        className={`flex gap-2 flex-wrap ${
-                          language === "ar" ? "flex-col items-center" : ""
-                        }`}>
-                        <span className="text-gray-700">
-                          {language === "ar" ? "تاريخ الطلب:" : "Placed in:"}
-                        </span>
-                        <span className="font-bold">{order.createdAt.substring(0, 10)}</span>
-                      </div>
-                      <div
-                        className={`flex gap-2 flex-wrap  ${
-                          language === "ar" ? "flex-col items-center" : ""
-                        }`}>
-                        <span className="text-gray-700 ">
-                          {language === "ar" ? "طريقة الدفع:" : "Payment method:"}
-                        </span>
-                        <span className="font-bold break-words">{order.paymentMethod}</span>
-                      </div>
-                      <div
-                        className={`flex gap-2 flex-wrap ${
-                          language === "ar" ? "flex-col items-center" : ""
-                        }`}>
-                        <span className="text-gray-700">
-                          {language === "ar" ? "السعر الإجمالي:" : "Total price:"}
-                        </span>
-                        <span className="font-bold">{order.totalPrice.toFixed(3)} KD</span>
-                      </div>
-                      <div
-                        className={`flex gap-2 flex-wrap ${
-                          language === "ar" ? "flex-col items-center" : ""
-                        }`}>
-                        <span className="text-gray-700">
-                          {language === "ar" ? "المنتجات:" : "Products:"}
-                        </span>
-                        <span className="font-bold">{order?.orderItems.length}</span>
-                      </div>
-                      <div
-                        className={`flex gap-2 flex-wrap ${
-                          language === "ar" ? "flex-col items-center" : ""
-                        }`}>
-                        <span className="text-gray-700">
-                          {language === "ar" ? "حالة الطلب:" : "Order status:"}
-                        </span>
-                        <span className="font-bold">
-                          {order?.isDelivered ? (
-                            <Badge variant="success">
-                              {language === "ar" ? "تم التوصيل" : "Delivered"}
-                            </Badge>
-                          ) : (
-                            <Badge variant="pending">
-                              {language === "ar" ? "قيد المعالجة" : "Processing"}
-                            </Badge>
-                          )}
-                        </span>
-                      </div>
-                    </Link>
-                  </div>
-                ))
-              ) : (
-                <div className="md:text:lg">
-                  <div className="">
-                    {language === "ar" ? "المستخدم ليس لديه طلبات" : "User does not have orders"}
-                  </div>
-                </div>
-              )}
             </section>
           </div>
         </div>
