@@ -6,7 +6,6 @@ import { BrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./redux/store.ts";
 import ToastWrapper from "./ToastWrapper";
-// import ProvideProvider from "./ProvideProvider.js";
 
 const rootElement = document.getElementById("root")!;
 
