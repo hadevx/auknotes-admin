@@ -6,6 +6,7 @@ import {
   useDeleteProductMutation,
   useGetAllCoursesQuery,
   useGetProductsByCourseQuery,
+  useUpdateProductMutation,
 } from "../../redux/queries/productApi";
 import Badge from "../../components/Badge";
 import { Box, Plus, Download, Trash2, Edit } from "lucide-react";
@@ -26,9 +27,17 @@ import { texts } from "./translation";
 function ProductList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-
+  const [editingProduct, setEditingProduct] = useState<any>(null); // store product being edited
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const language = useSelector((state: any) => state.language.lang);
-
+  const openEditModal = (product: any) => {
+    setEditingProduct(product);
+    setName(product.name);
+    setCourse(product.course);
+    setType(product.type);
+    setPdfFile(null); // reset pdf file
+    setIsEditModalOpen(true);
+  };
   // Fetch all courses
   const { data: courses, isLoading: loadingCourses } = useGetAllCoursesQuery(undefined);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
@@ -39,6 +48,7 @@ function ProductList() {
   });
 
   const [deleteProduct] = useDeleteProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
   const [uploadProductFile, { isLoading: loadingUploadImage }] = useUploadProductFileMutation();
   const [createProduct, { isLoading: loadingCreateProduct }] = useCreateProductMutation();
 
@@ -94,6 +104,46 @@ function ProductList() {
       toast.success(language === "ar" ? "تم حذف المنتج بنجاح" : "Product deleted successfully");
     } catch {
       toast.error(language === "ar" ? "فشل حذف المنتج" : "Failed to delete product");
+    }
+  };
+  // Update product function
+  const handleUpdateProduct = async () => {
+    if (!editingProduct) return;
+
+    let uploadedFile: { url: string; publicId: string; size: number } | undefined;
+
+    // Upload new file if selected
+    if (pdfFile) {
+      try {
+        const formData = new FormData();
+        formData.append("file", pdfFile);
+        const res = await uploadProductFile(formData).unwrap();
+        uploadedFile = {
+          url: res.file.fileUrl,
+          publicId: res.file.publicId,
+          size: pdfFile.size,
+        };
+      } catch (error: any) {
+        toast.error(error?.data?.message || error?.error);
+        return;
+      }
+    }
+
+    try {
+      await updateProduct({
+        _id: editingProduct._id,
+        name,
+        course,
+        type,
+        file: uploadedFile || editingProduct.file, // keep old file if no new file
+      }).unwrap();
+
+      toast.success(language === "ar" ? "تم تعديل المنتج بنجاح" : "Product updated successfully");
+      setIsEditModalOpen(false);
+      setEditingProduct(null);
+      resetForm();
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل تعديل المنتج" : "Failed to update product");
     }
   };
 
@@ -193,7 +243,9 @@ function ProductList() {
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
                             <Trash2 className="h-5 w-5" />
                           </button>
-                          <button className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
+                          <button
+                            onClick={() => openEditModal(p)}
+                            className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
                             <Edit className="h-5 w-5" />
                           </button>
                         </td>
@@ -273,6 +325,64 @@ function ProductList() {
                 : loadingCreateProduct
                 ? texts[language].creating
                 : texts[language].create}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{texts[language].editProduct}</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto mt-4 space-y-4">
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+              className="p-2 w-full border rounded-md"
+            />
+
+            <input
+              type="text"
+              placeholder={texts[language].productName}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="p-2 w-full border rounded-md"
+            />
+
+            <select
+              value={course}
+              onChange={(e) => setCourse(e.target.value)}
+              className="p-2 w-full border rounded-md">
+              <option value="" disabled>
+                {texts[language].selectCategory}
+              </option>
+              {courses?.map((c: any) => (
+                <option key={c._id} value={c._id}>
+                  {c.code}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="p-2 w-full border rounded-md">
+              <option value="" disabled>
+                {texts[language].selectType}
+              </option>
+              <option value="Note">Note</option>
+              <option value="Book">Book</option>
+              <option value="Exam">Exam</option>
+              <option value="Assignment">Assignment</option>
+              <option value="Syllabus">Syllabus</option>
+            </select>
+          </div>
+
+          <DialogFooter className="mt-6 flex justify-end gap-2">
+            <Button variant="default" disabled={loadingUploadImage} onClick={handleUpdateProduct}>
+              {loadingUploadImage ? texts[language].uploading : texts[language].update}
             </Button>
           </DialogFooter>
         </DialogContent>
