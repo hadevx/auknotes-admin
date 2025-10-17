@@ -137,7 +137,7 @@ function ProductList() {
       try {
         const formData = new FormData();
         formData.append("file", pdfFile);
-        const res = await uploadProductFile(formData).unwrap();
+        const res = await uploadProductFile({ formData, course }).unwrap();
         uploadedFile = {
           url: res.file.fileUrl,
           publicId: res.file.publicId,
