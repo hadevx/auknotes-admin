@@ -2,7 +2,7 @@ import Layout from "../../Layout";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useGetUsersQuery } from "../../redux/queries/userApi";
-import { Search, Crown, Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import Badge from "../../components/Badge";
 import { Separator } from "../../components/ui/separator";
 import Loader from "../../components/Loader";
@@ -77,8 +77,8 @@ function Customers() {
                 dir={language === "ar" ? "rtl" : "ltr"}
                 className="text-lg lg:text-2xl font-black flex gap-2 lg:gap-5 items-center">
                 {t.users}:{" "}
-                <Badge icon={false}>
-                  <Users strokeWidth={1} />
+                <Badge icon={false} className="px-1 py-1">
+                  <Users strokeWidth={1} className="size-4 lg:size-5" />
                   <p className="text-lg lg:text-sm">
                     {totalUsers > 0 ? totalUsers : "0"}{" "}
                     <span className="hidden lg:inline">{t.totalUsers}</span>
@@ -110,7 +110,6 @@ function Customers() {
                       <th className="px-4 py-3 border-b">{t.email}</th>
                       {/* <th className="px-4 py-3 border-b">{t.phone}</th> */}
                       <th className="px-4 py-3 border-b">{t.registeredIn}</th>
-                      <th className="px-4 py-3 border-b">{t.admin}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
@@ -125,15 +124,6 @@ function Customers() {
                           {/* <td className="px-4 py-5">{user.phone}</td> */}
 
                           <td className="px-4 py-5">{user.createdAt.substring(0, 10)}</td>
-                          <td className="px-4 py-5">
-                            {user.isAdmin ? (
-                              <p className="flex items-center gap-2">
-                                <Crown className="text-blue-500" />
-                              </p>
-                            ) : (
-                              <p>{t.user}</p>
-                            )}
-                          </td>
                         </tr>
                       ))
                     ) : (

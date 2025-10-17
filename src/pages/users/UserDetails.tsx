@@ -39,6 +39,7 @@ function UserDetails() {
     isLoading: loadingUser,
   } = useGetUserDetailsQuery<any>(userID);
 
+  console.log(user);
   const [deleteUser, { isLoading: loadingDeleteUser }] = useDeleteUserMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { refetch } = useGetUsersQuery(undefined);
@@ -104,7 +105,7 @@ function UserDetails() {
               {!user?.isAdmin && (
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="select-none text-xs lg:text-lg  bg-gradient-to-t from-rose-500 to-rose-400 text-white px-2 lg:px-3 py-2 rounded-lg font-bold  hover:opacity-80">
+                  className="select-none text-xs lg:text-base  bg-gradient-to-t from-rose-500 to-rose-400 text-white px-2  py-2 rounded-lg font-bold  hover:opacity-80">
                   {language === "ar" ? "حذف المستخدم" : "Delete User"}
                 </button>
               )}
@@ -114,9 +115,9 @@ function UserDetails() {
                   refetch(); // refresh user data after toggle
                 }}
                 className={clsx(
-                  "select-none text-xs lg:text-lg font-bold px-2 lg:px-3 py-2 rounded-lg shadow-md transition-all duration-200",
+                  "select-none text-xs lg:text-base font-bold px-2 py-2 rounded-lg shadow-md transition-all duration-200",
                   user?.isBlocked
-                    ? "bg-gradient-to-t from-green-600 to-green-500 hover:opacity-85 text-white"
+                    ? "bg-gradient-to-t from-teal-600 to-teal-500 hover:opacity-85 text-white"
                     : "bg-gradient-to-t from-rose-500 to-rose-400 hover:opacity-85 text-white"
                 )}>
                 {user?.isBlocked
@@ -133,18 +134,18 @@ function UserDetails() {
                   refetch(); // refresh user data after toggle
                 }}
                 className={clsx(
-                  "select-none text-xs lg:text-lg font-bold px-2 lg:px-3 py-2 rounded-lg shadow-md transition-all duration-200",
+                  "select-none text-xs lg:text-base font-bold px-2 lg:px-2 py-2 rounded-lg shadow-md transition-all duration-200",
                   user?.isVerified
-                    ? "bg-gradient-to-t from-green-600 to-green-500 hover:opacity-85 text-white"
+                    ? "bg-gradient-to-t from-teal-600 to-teal-500 hover:opacity-85 text-white"
                     : "bg-gradient-to-t from-rose-500 to-rose-400 hover:opacity-85 text-white"
                 )}>
                 {user?.isVerified
                   ? language === "ar"
-                    ? "موثق"
-                    : "un User"
+                    ? "تم التوثيق"
+                    : "User Verified"
                   : language === "ar"
                   ? "توثيق"
-                  : "Block User"}
+                  : "Verify User"}
               </button>
             </div>
           </div>
@@ -161,7 +162,7 @@ function UserDetails() {
                 {/* Name */}
                 <div className="flex flex-col">
                   <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "اليوزر:" : "Username:"}
+                    {language === "ar" ? "اسم المستخدم:" : "Username:"}
                   </span>
                   <span className="mt-1 font-semibold text-gray-700">{user?.username}@</span>
                 </div>
@@ -201,7 +202,7 @@ function UserDetails() {
                 </div>
                 <div className="flex flex-col items-start">
                   <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "محظور:" : "Blocked:"}
+                    {language === "ar" ? "توثيق:" : "Verified:"}
                   </span>
                   {user?.isVerified ? (
                     <Badge icon={false} variant="success" className="px-2 py-1 rounded-full">

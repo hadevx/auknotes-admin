@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import Badge from "../../components/Badge";
 import Loader from "../../components/Loader";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Boxes, Search, Loader2Icon, SquarePen } from "lucide-react";
+import { Plus, Trash2, Boxes, Search, Loader2Icon, SquarePen, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,7 @@ function Categories() {
   const [page, setPage] = useState(1);
   const [course, setCourse] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [isClosed, setIsClosed] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const [filterType, setFilterType] = useState("all");
@@ -168,6 +169,7 @@ function Categories() {
         code: course,
         image: uploadedImageUrl,
         isFeatured,
+        isClosed,
       }).unwrap();
 
       toast.success("Course updated successfully!");
@@ -254,7 +256,9 @@ function Categories() {
                             className="size-20 object-cover rounded-md"
                           />
                         )}
-                        <span className="uppercase">{cat.code}</span>
+                        <span className="uppercase flex gap-1 items-center">
+                          {cat.code} {cat.isClosed && <Lock className="size-4" />}
+                        </span>
                       </td>
                       <td className="">
                         <div className="flex gap-2">
@@ -378,6 +382,10 @@ function Categories() {
           <div className="flex items-center gap-2">
             <label htmlFor="">Featured</label>
             <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="">Closed</label>
+            <Switch checked={isClosed} onCheckedChange={setIsClosed} />
           </div>
 
           <DialogFooter className="mt-4 flex justify-end gap-2">
