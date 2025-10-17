@@ -14,6 +14,11 @@ export const productApi = api.injectEndpoints({
         url: `/api/products/product/${productId}`,
       }),
     }),
+    getCourseById: builder.query({
+      query: (id) => ({
+        url: `/api/course/${id}`,
+      }),
+    }),
     getProductsByCourse: builder.query({
       query: ({ courseId }) => ({
         url: `/api/products/course/${courseId}`,
@@ -22,10 +27,10 @@ export const productApi = api.injectEndpoints({
     }),
 
     uploadProductFile: builder.mutation({
-      query: (data) => ({
-        url: "/api/upload",
+      query: ({ formData, course }) => ({
+        url: `/api/upload?course=${course}`,
         method: "POST",
-        body: data,
+        body: formData,
       }),
     }),
     uploadCourseImage: builder.mutation({
@@ -109,4 +114,5 @@ export const {
   useUploadCourseImageMutation,
   useUpdateCourseMutation,
   useGetAllCoursesQuery,
+  useGetCourseByIdQuery,
 } = productApi;

@@ -7,6 +7,7 @@ import {
   useGetAllCoursesQuery,
   useGetProductsByCourseQuery,
   useUpdateProductMutation,
+  useGetCourseByIdQuery,
 } from "../../redux/queries/productApi";
 import Badge from "../../components/Badge";
 import { Box, Plus, Download, Trash2, Edit } from "lucide-react";
@@ -30,6 +31,7 @@ function ProductList() {
   const [editingProduct, setEditingProduct] = useState<any>(null); // store product being edited
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const language = useSelector((state: any) => state.language.lang);
+
   const openEditModal = (product: any) => {
     setEditingProduct(product);
     setName(product.name);
@@ -55,7 +57,12 @@ function ProductList() {
   const [name, setName] = useState<string>("");
   const [course, setCourse] = useState<string>("");
   const [type, setType] = useState<string>("");
+  const { data } = useGetCourseByIdQuery(course);
 
+  console.log(data);
+  const formattedCode = data?.code?.replace(/\s+/g, ""); // "CPEG100"
+
+  console.log(formattedCode);
   const resetForm = () => {
     setName("");
     setCourse("");
@@ -64,37 +71,50 @@ function ProductList() {
   };
 
   const handleCreateProduct = async () => {
+    // Make sure a course is selected
+    if (!course) {
+      toast.error("Please select a course before uploading");
+      return;
+    }
+
     let uploadedFile: { url: string; publicId: string; size: number } | null = null;
 
+    // Upload file if selected
     if (pdfFile) {
       try {
         const formData = new FormData();
         formData.append("file", pdfFile);
 
-        const res = await uploadProductFile(formData).unwrap();
+        console.log("FormData course:", course); // Debug
+
+        // Send FormData to backend
+        const res = await uploadProductFile({ formData, course }).unwrap();
+
         uploadedFile = {
           url: res.file.fileUrl,
           publicId: res.file.publicId,
           size: pdfFile.size,
         };
       } catch (error: any) {
-        toast.error(error?.data?.message || error?.error);
+        toast.error(error?.data?.message || error?.error || "File upload failed");
         return;
       }
     }
 
+    // Create the product in DB
     try {
       await createProduct({
         name,
-        course,
+        course, // this is the course ID
         type,
         file: uploadedFile,
       }).unwrap();
+
       toast.success("Product created successfully");
       setIsModalOpen(false);
       resetForm();
-    } catch {
-      toast.error("Failed to create product");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to create product");
     }
   };
 
