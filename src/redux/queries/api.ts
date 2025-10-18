@@ -1,10 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+const backend =
+  import.meta.env.VITE_ENVIRONMENT === "production"
+    ? import.meta.env.VITE_API_URL
+    : import.meta.env.VITE_API_LOCALHOST;
+
 const baseQuery = fetchBaseQuery({
-  baseUrl:
-    import.meta.env.VITE_ENVIRONMENT === "production"
-      ? import.meta.env.VITE_API_URL
-      : "http://localhost:4001",
+  baseUrl: backend,
   credentials: "include",
 });
 
