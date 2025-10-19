@@ -358,7 +358,7 @@ function ProductList() {
           <div className="flex-1 overflow-y-auto mt-4 space-y-4">
             <input
               type="file"
-              accept=".pdf,.doc,.docx"
+              accept=".pdf,.doc,.docx,.ppt,.pptx"
               onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
               className="p-2 w-full border rounded-md"
             />
