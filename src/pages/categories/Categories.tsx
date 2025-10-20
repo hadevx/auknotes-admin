@@ -35,6 +35,8 @@ function Categories() {
   const [course, setCourse] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isClosed, setIsClosed] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const [filterType, setFilterType] = useState("all");
@@ -170,6 +172,7 @@ function Categories() {
         image: uploadedImageUrl,
         isFeatured,
         isClosed,
+        isPaid,
       }).unwrap();
 
       toast.success("Course updated successfully!");
@@ -386,6 +389,10 @@ function Categories() {
           <div className="flex items-center gap-2">
             <label htmlFor="">Closed</label>
             <Switch checked={isClosed} onCheckedChange={setIsClosed} />
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="">Paid</label>
+            <Switch checked={isPaid} onCheckedChange={setIsPaid} />
           </div>
 
           <DialogFooter className="mt-4 flex justify-end gap-2">
