@@ -63,6 +63,13 @@ const userApi = api.injectEndpoints({
         method: "PATCH",
       }),
     }),
+    addPurchasedCourse: builder.mutation({
+      query: ({ userId, courseId }: any) => ({
+        url: `/api/users/add-course/${userId}`,
+        method: "PUT",
+        body: { courseId },
+      }),
+    }),
   }),
 });
 
@@ -77,4 +84,5 @@ export const {
   useGetGovernorateQuery,
   useToggleBlockUserMutation,
   useSetToVerifiedMutation,
+  useAddPurchasedCourseMutation,
 } = userApi;

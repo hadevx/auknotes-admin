@@ -62,6 +62,8 @@ function Categories() {
   const labels: any = {
     en: {
       categories: "Courses",
+      resources: "Resources",
+      status: "Status",
       totalCategories: "courses",
       addCategory: "Add new Course",
       searchPlaceholder: "Search courses...",
@@ -79,6 +81,8 @@ function Categories() {
     },
     ar: {
       categories: "الدورات",
+      status: "الحاله",
+      resources: "الموارد",
       totalCategories: "دورة",
       addCategory: "إضافة دورة جديدة",
       searchPlaceholder: "ابحث عن دورة...",
@@ -244,7 +248,9 @@ function Categories() {
               <thead className="bg-white text-gray-900/50 font-semibold">
                 <tr>
                   <th className="pb-2 border-b">{t.tableName}</th>
-                  <th className="border-b">{t.tableActions}</th>
+                  <th className="pb-2 border-b">{t.status}</th>
+                  <th className="pb-2 border-b">{t.resources}</th>
+                  <th className="pb-2 border-b">{t.tableActions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
@@ -252,15 +258,40 @@ function Categories() {
                   categories?.map((cat: any) => (
                     <tr key={cat._id} className="font-bold">
                       <td className="flex items-center gap-2 py-2">
-                        {cat.image && (
+                        {cat?.image ? (
                           <img
                             src={cat.image}
                             alt={cat.code}
-                            className="size-20 object-cover rounded-md"
+                            className="size-10 sm:size-20 object-cover rounded-md"
+                          />
+                        ) : (
+                          <img
+                            src="/placeholder.png"
+                            className="size-10 sm:size-20 border-2  object-cover rounded-md"
                           />
                         )}
+                        <span className="uppercase flex gap-1 items-center">{cat.code}</span>
+                      </td>
+                      <td className="">
                         <span className="uppercase flex gap-1 items-center">
-                          {cat.code} {cat.isClosed && <Lock className="size-4" />}
+                          {cat.isClosed ? (
+                            <>
+                              <Lock className="size-4 text-rose-500" />
+                              <span className="text-xs text-rose-500 font-bold">Closed</span>
+                            </>
+                          ) : cat.isPaid ? (
+                            <>
+                              <Lock className="size-4 text-blue-500" />
+                              <span className="text-xs text-blue-500 font-bold">Paid</span>
+                            </>
+                          ) : (
+                            <span className="text-xs text-teal-500 font-bold">Open</span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="">
+                        <span className="uppercase flex gap-1 items-center">
+                          {cat?.resources?.length || 0}
                         </span>
                       </td>
                       <td className="">
@@ -272,7 +303,7 @@ function Categories() {
                             {isDeleting && deletingCategoryId === cat._id ? (
                               <Loader2Icon className="animate-spin" />
                             ) : (
-                              <Trash2 />
+                              <Trash2 className="size-4 sm:size-5" />
                             )}
                           </button>
                           <button
@@ -282,7 +313,7 @@ function Categories() {
                               setIsEditModalOpen(true);
                             }}
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-lg transition-all duration-300 flex items-center justify-center min-w-[32px] min-h-[32px]">
-                            <SquarePen />
+                            <SquarePen className="size-4 sm:size-5" />
                           </button>
                         </div>
                       </td>
@@ -382,19 +413,20 @@ function Categories() {
               />
             </div>
           )}
-          <div className="flex items-center gap-2">
-            <label htmlFor="">Featured</label>
-            <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
+          <div className="grid grid-cols-3  items-center">
+            <div className="flex items-center gap-2">
+              <label htmlFor="">Featured</label>
+              <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="">Closed</label>
+              <Switch checked={isClosed} onCheckedChange={setIsClosed} />
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="">Paid</label>
+              <Switch checked={isPaid} onCheckedChange={setIsPaid} />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="">Closed</label>
-            <Switch checked={isClosed} onCheckedChange={setIsClosed} />
-          </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="">Paid</label>
-            <Switch checked={isPaid} onCheckedChange={setIsPaid} />
-          </div>
-
           <DialogFooter className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
               {t.cancel}

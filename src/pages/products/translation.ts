@@ -64,5 +64,6 @@ export const texts: any = {
     noProductsFound: "لا توجد منتجات.",
     type: "النوع",
     size: "الحجم",
+    update: "تحديث",
   },
 };

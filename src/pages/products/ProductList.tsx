@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "../../Layout";
 import {
   useUploadProductFileMutation,
@@ -43,11 +43,18 @@ function ProductList() {
   // Fetch all courses
   const { data: courses, isLoading: loadingCourses } = useGetAllCoursesQuery(undefined);
   const [selectedCourse, setSelectedCourse] = useState<string>("");
-
+  // ✅ Automatically select the first course when loaded
+  useEffect(() => {
+    if (!loadingCourses && courses?.length > 0 && !selectedCourse) {
+      setSelectedCourse(courses[0]?._id);
+    }
+  }, [courses, loadingCourses]);
   // Fetch products by selected course
   const { data: products, isLoading: loadingProducts } = useGetProductsByCourseQuery({
     courseId: selectedCourse,
   });
+
+  console.log(products);
 
   const [deleteProduct] = useDeleteProductMutation();
   const [updateProduct] = useUpdateProductMutation();
@@ -209,8 +216,11 @@ function ProductList() {
                   Select a course
                 </option>
                 {courses?.map((c: any) => (
-                  <option key={c._id} value={c._id}>
-                    {c.code}
+                  <option
+                    key={c._id}
+                    value={c._id}
+                    className={`${c.isClosed && "text-rose-500"} ${c.isPaid && "text-blue-500"}`}>
+                    {c.code} {c.isPaid ? "(paid)" : ""} {c.isClosed ? "(closed)" : ""}
                   </option>
                 ))}
               </select>
@@ -237,8 +247,21 @@ function ProductList() {
                   ) : (
                     products?.map((p: any) => (
                       <tr key={p._id}>
-                        <td className="p-4 font-semibold">{p.name}</td>
-                        <td className="font-semibold">{p.type}</td>
+                        <td className="p-4 flex items-center gap-2 font-semibold">
+                          <img
+                            src={
+                              p.file?.url?.toLowerCase().endsWith(".pdf")
+                                ? "/pdf.png"
+                                : p.file?.url?.toLowerCase().endsWith(".ppt") ||
+                                  p.file?.url?.toLowerCase().endsWith(".pptx")
+                                ? "/powerpoint.png"
+                                : "/word.png"
+                            }
+                            className="size-10 object-contain"
+                          />
+                          {p.name}
+                        </td>
+                        <td className="font-semibold text-gray-400">{p.type}</td>
                         <td className="font-semibold">
                           {p?.size && (
                             <span className="text-xs text-gray-400 mt-1 block">
@@ -255,18 +278,18 @@ function ProductList() {
                               href={p.file.url}
                               download
                               className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
-                              <Download className="h-5 w-5" />
+                              <Download className="size-4" />
                             </a>
                           )}
                           <button
                             onClick={() => handleDeleteProduct(p._id)}
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
-                            <Trash2 className="h-5 w-5" />
+                            <Trash2 className="size-4" />
                           </button>
                           <button
                             onClick={() => openEditModal(p)}
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
-                            <Edit className="h-5 w-5" />
+                            <Edit className="size-4" />
                           </button>
                         </td>
                       </tr>

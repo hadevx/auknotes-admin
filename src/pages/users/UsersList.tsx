@@ -119,7 +119,11 @@ function Customers() {
                           key={user._id}
                           className="cursor-pointer hover:bg-gray-100 transition-all duration-300 font-bold"
                           onClick={() => navigate(`/userlist/${user._id}`)}>
-                          <td className="px-4 py-5">{user.name}</td>
+                          <td className="px-4 py-5 flex items-center gap-1">
+                            {user.name}
+                            {user.isVerified && <img src="/verify.png" className="size-4" />}
+                            {user.isAdmin && <img src="/admin.png" className="size-4" />}
+                          </td>
                           <td className="px-4 py-5">{user.email}</td>
                           {/* <td className="px-4 py-5">{user.phone}</td> */}
 
