@@ -187,8 +187,8 @@ function ProductList() {
                 dir={language === "ar" ? "rtl" : "ltr"}
                 className="text-lg lg:text-2xl font-black flex gap-2 lg:gap-5 items-center flex-wrap">
                 {texts[language].products}:
-                <Badge icon={false}>
-                  <Box />
+                <Badge icon={false} className="p-1">
+                  <Box className="size-5" strokeWidth={1} />
                   <p className="text-lg lg:text-sm">
                     {products?.length}{" "}
                     <span className="hidden lg:inline">{texts[language].products}</span>
@@ -199,8 +199,8 @@ function ProductList() {
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="bg-black text-white font-bold flex items-center gap-1 text-sm lg:text-md shadow-md px-3 py-2 rounded-md hover:bg-black/70 transition">
-                <Plus />
                 {texts[language].addProduct}
+                <Plus />
               </button>
             </div>
 
@@ -241,7 +241,7 @@ function ProductList() {
                   {products?.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="text-center p-5 text-gray-400">
-                        No products found
+                        {texts[language].noProductsFound}
                       </td>
                     </tr>
                   ) : (

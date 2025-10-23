@@ -7,11 +7,8 @@ import { useLogoutMutation } from "../redux/queries/userApi";
 import { toast } from "react-toastify";
 import { Separator } from "./ui/separator";
 import { useState } from "react";
-/* import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Mail, User } from "lucide-react"; */
 import { motion } from "framer-motion";
 import { useEffect } from "react";
-import logo from "../assets/logo.png";
 
 function SideMenu() {
   const [logoutApiCall, { isLoading: loadingLogout }] = useLogoutMutation();
@@ -80,19 +77,10 @@ function SideMenu() {
   const menuContent = (
     <div className="flex flex-col h-full text-black px-2 lg:px-[2rem] py-[2rem] border-r-[2px] w-64 lg:w-auto min-h-screen ">
       <div className="mt-10 flex items-center gap-2 p-2">
-        <a href="https://webschema.online" target="_blank">
-          <motion.div
-            whileHover={{ scale: 0.95 }}
-            className="rounded-full select-none border-2 border-gray-400 hover:border-gray-900 size-12 flex justify-center items-center transition">
-            <div className="rounded-full hover:opacity-80 bg-gradient-to-r shadow-md from-zinc-600 to-zinc-800 text-white size-10 flex justify-center items-center font-semibold text-lg">
-              {/*    {adminUserInfo?.name.charAt(0).toUpperCase()}
-            {adminUserInfo?.name.charAt(adminUserInfo?.name.length - 1).toUpperCase()} */}
-              <img src={logo} alt="logo" width={"25px"} />
-            </div>
-          </motion.div>
-        </a>
+        <img src="/avatar/logo.webp" alt="logo" className="rounded-md size-11" />
+
         <div>
-          <p className="text-sm font-bold">{adminUserInfo?.name}</p>
+          <p className="text-sm font-bold">AUKNOTES</p>
           <p className="text-sm text-gray-500">{adminUserInfo?.email}</p>
         </div>
       </div>
@@ -151,7 +139,7 @@ function SideMenu() {
           <Separator className="my-4 bg-black/20" />
           <button
             onClick={handleLogout}
-            className="items-center hover:font-bold cursor-pointer transition-all duration-100 w-full flex gap-3 bg-gradient-to-t hover:from-rose-500 hover:to-rose-400 hover:text-white text-black px-3 py-2 rounded-lg hover:shadow-md">
+            className="items-center font-bold cursor-pointer transition-all duration-100 w-full flex gap-3 bg-gradient-to-t from-rose-500 to-rose-400 text-white  px-3 py-2 rounded-lg shadow-md">
             {loadingLogout ? (
               <>
                 <Loader2Icon className="animate-spin" />
@@ -177,7 +165,7 @@ function SideMenu() {
         className="lg:hidden  drop-shadow-[0_0_10px_rgba(24,24,27,0.5)] fixed top-4 left-4 z-50 p-2 rounded-md bg-zinc-900 text-white"
         onClick={() => setIsMenuOpen((prev) => !prev)}
         aria-label="Toggle menu">
-        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
       </button>
 
       <div className="hidden lg:flex  z-50">{menuContent}</div>

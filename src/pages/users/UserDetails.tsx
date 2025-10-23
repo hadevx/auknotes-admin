@@ -4,7 +4,7 @@ import Layout from "../../Layout";
 import clsx from "clsx";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
-import { Loader2Icon } from "lucide-react";
+import { ArrowLeft, Loader2Icon } from "lucide-react";
 import {
   useDeleteUserMutation,
   useGetUserDetailsQuery,
@@ -36,6 +36,8 @@ function UserDetails() {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [addPurchasedCourse] = useAddPurchasedCourseMutation();
   const { data: allCourses } = useGetAllCoursesQuery(undefined);
+
+  const isPaidCourses = allCourses?.filter((c: any) => c.isPaid);
 
   const [toggleBlockUser] = useToggleBlockUserMutation();
   const [setToVerified] = useSetToVerifiedMutation();
@@ -118,9 +120,9 @@ function UserDetails() {
           {/* Header */}
           <div className={`flex justify-between items-center`}>
             <h1 className="text-lg font-bold">
-              {language === "ar" ? "معلومات العميل:" : "Customer's Information:"}
+              {language === "ar" ? "معلومات المستخدم:" : "User's Information:"}
             </h1>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               {!user?.isAdmin && (
                 <button
                   onClick={() => setIsModalOpen(true)}
@@ -174,9 +176,17 @@ function UserDetails() {
           {/* Personal Info */}
           <div className="relative  w-full p-6 bg-white rounded-xl border">
             <section>
-              <h2 className="text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 mb-6">
-                {language === "ar" ? "المعلومات الشخصية" : "Personal Information"}
-              </h2>
+              <div className="flex justify-between items-center  mb-6 border-b pb-2 border-gray-200">
+                <h2 className="text-lg font-bold text-gray-800 ">
+                  {language === "ar" ? "المعلومات الشخصية" : "Personal Information"}
+                </h2>
+                <button
+                  onClick={() => navigate(-1)}
+                  className="px-2 py-1 flex items-center border bg-zinc-100 text-black text-sm rounded-full">
+                  Back <ArrowLeft className="size-4" />
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex flex-col">
                   <span className="text-gray-400 text-sm">
@@ -200,30 +210,36 @@ function UserDetails() {
                     {user?.email}
                   </a>
                 </div>
-                <div className="flex flex-col items-start">
+                <div className="flex items-center gap-3 ">
                   <span className="text-gray-400 text-sm">
                     {language === "ar" ? "محظور:" : "Blocked:"}
                   </span>
                   {user.isBlocked ? (
-                    <Badge icon={false} variant="danger" className="px-2 py-1 rounded-full">
+                    <Badge icon={false} variant="danger" className="px-2 py-1 text-xs rounded-full">
                       {language === "ar" ? "محظور" : "Blocked"}
                     </Badge>
                   ) : (
-                    <Badge icon={false} variant="success" className="px-2 py-1 rounded-full">
+                    <Badge
+                      icon={false}
+                      variant="success"
+                      className="px-2 py-1 text-xs rounded-full">
                       {language === "ar" ? "غير محظور" : "Not Blocked"}
                     </Badge>
                   )}
                 </div>
-                <div className="flex flex-col items-start">
+                <div className="flex gap-3 items-center">
                   <span className="text-gray-400 text-sm">
                     {language === "ar" ? "توثيق:" : "Verified:"}
                   </span>
                   {user?.isVerified ? (
-                    <Badge icon={false} variant="success" className="px-2 py-1 rounded-full">
+                    <Badge
+                      icon={false}
+                      variant="success"
+                      className="px-2 py-1 rounded-full text-xs">
                       {language === "ar" ? "موثق" : "Verified"}
                     </Badge>
                   ) : (
-                    <Badge icon={false} variant="danger" className="px-2 py-1 rounded-full">
+                    <Badge icon={false} variant="danger" className="px-2 py-1 text-xs rounded-full">
                       {language === "ar" ? "غير موثق" : "Unverified"}
                     </Badge>
                   )}
@@ -235,7 +251,7 @@ function UserDetails() {
           {/* Purchased Courses */}
           <div className="relative mt-3 w-full p-6 bg-white rounded-xl border">
             <section>
-              <h2 className="text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 mb-6">
+              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-6">
                 {language === "ar" ? "الدورات المشتراة" : "Purchased Courses"}
               </h2>
 
@@ -244,7 +260,7 @@ function UserDetails() {
                   {user?.purchasedCourses.map((course: any) => (
                     <div
                       key={course._id}
-                      className="flex justify-between bg-black text-xs sm:text-base text-white items-center px-2 py-1 border rounded-full shadow-sm  transition">
+                      className="flex justify-between bg-black text-xs sm:text-sm text-white items-center px-2 py-1 border rounded-full shadow-sm  transition">
                       <div>
                         <p className="">{course.code}</p>
                       </div>
@@ -262,7 +278,7 @@ function UserDetails() {
           {/* Add Purchased Course */}
           <div className="relative mt-3 w-full p-6 bg-white rounded-xl border">
             <section>
-              <h2 className="text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 mb-6">
+              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-6">
                 {language === "ar" ? "إضافة دورة للمستخدم" : "Add Purchased Course"}
               </h2>
 
@@ -272,7 +288,7 @@ function UserDetails() {
                   onChange={(e) => setSelectedCourse(e.target.value)}
                   className="border rounded-lg px-3 py-2 flex-1">
                   <option value="">{language === "ar" ? "اختر دورة" : "Select a course"}</option>
-                  {allCourses?.map((course: any) => (
+                  {isPaidCourses?.map((course: any) => (
                     <option key={course._id} value={course._id}>
                       {course.code}
                     </option>

@@ -11,9 +11,12 @@ import { Loader2Icon } from "lucide-react";
 import { toggleLang } from "../../redux/slices/languageSlice";
 import { useSelector, useDispatch } from "react-redux";
 import { Globe } from "lucide-react";
+
 function Settings() {
   const [updateStoreStatus, { isLoading: loadingUpdateStatus }] = useUpdateStoreStatusMutation();
   const { data: storeStatus, refetch, isLoading } = useGetStoreStatusQuery(undefined);
+
+  console.log(storeStatus);
 
   const [status, setStatus] = useState("");
   const [banner, setBanner] = useState("");

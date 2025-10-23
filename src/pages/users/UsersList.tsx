@@ -77,8 +77,8 @@ function Customers() {
                 dir={language === "ar" ? "rtl" : "ltr"}
                 className="text-lg lg:text-2xl font-black flex gap-2 lg:gap-5 items-center">
                 {t.users}:{" "}
-                <Badge icon={false} className="px-1 py-1">
-                  <Users strokeWidth={1} className="size-4 lg:size-5" />
+                <Badge icon={false} className="p-1">
+                  <Users strokeWidth={1} className="size-5" />
                   <p className="text-lg lg:text-sm">
                     {totalUsers > 0 ? totalUsers : "0"}{" "}
                     <span className="hidden lg:inline">{t.totalUsers}</span>
@@ -102,14 +102,13 @@ function Customers() {
                 />
               </div>
 
-              <div className="rounded-lg border lg:p-5 overflow-x-scroll md:overflow-auto bg-white">
+              <div className="rounded-lg border p-5  bg-white">
                 <table className="w-full rounded-lg text-xs lg:text-sm border-gray-200 text-left text-gray-700">
                   <thead className="bg-white text-gray-900/50 font-semibold">
                     <tr>
-                      <th className="px-4 py-3 border-b">{t.name}</th>
-                      <th className="px-4 py-3 border-b">{t.email}</th>
-                      {/* <th className="px-4 py-3 border-b">{t.phone}</th> */}
-                      <th className="px-4 py-3 border-b">{t.registeredIn}</th>
+                      <th className="pb-2  border-b">{t.name}</th>
+                      <th className="pb-2  border-b">{t.email}</th>
+                      <th className="pb-2 border-b">{t.registeredIn}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
@@ -119,20 +118,35 @@ function Customers() {
                           key={user._id}
                           className="cursor-pointer hover:bg-gray-100 transition-all duration-300 font-bold"
                           onClick={() => navigate(`/userlist/${user._id}`)}>
-                          <td className="px-4 py-5 flex items-center gap-1">
-                            {user.name}
+                          <td className=" py-1 flex items-center gap-1">
+                            {user?.avatar ? (
+                              <img
+                                src={`/avatar/${user.avatar}`}
+                                alt={user}
+                                className={`size-10  object-cover rounded-md`}
+                              />
+                            ) : (
+                              <div
+                                className={`size-10 rounded-md text-lg flex items-center uppercase justify-center font-semibold ${
+                                  user.isAdmin ? "bg-white text-black" : "bg-[#f84713] text-white"
+                                }`}>
+                                {user?.username?.charAt(0) +
+                                  user?.username?.charAt(user?.username?.length - 1)}
+                              </div>
+                            )}
+                            <span className="ml-1">{user.name}</span>
                             {user.isVerified && <img src="/verify.png" className="size-4" />}
                             {user.isAdmin && <img src="/admin.png" className="size-4" />}
                           </td>
-                          <td className="px-4 py-5">{user.email}</td>
+                          <td className=" py-5">{user.email}</td>
                           {/* <td className="px-4 py-5">{user.phone}</td> */}
 
-                          <td className="px-4 py-5">{user.createdAt.substring(0, 10)}</td>
+                          <td className="py-5">{user.createdAt.substring(0, 10)}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
+                        <td colSpan={5} className=" py-6 text-center text-gray-500">
                           {t.noUsersFound}
                         </td>
                       </tr>

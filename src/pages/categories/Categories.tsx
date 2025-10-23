@@ -32,6 +32,7 @@ function Categories() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [courseName, setCourseName] = useState("");
   const [course, setCourse] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isClosed, setIsClosed] = useState(false);
@@ -59,6 +60,11 @@ function Categories() {
   const categories = data?.courses || [];
   const pages = data?.pages || 1;
   console.log(categories);
+
+  const countIsPaid = categories?.filter((c: any) => c.isPaid);
+  const countIsClosed = categories?.filter((c: any) => c.isClosed);
+  const countIsAvailable = categories?.filter((c: any) => !c.isPaid && !c.isClosed);
+
   const labels: any = {
     en: {
       categories: "Courses",
@@ -80,20 +86,21 @@ function Categories() {
       creating: "Creating...",
     },
     ar: {
-      categories: "الدورات",
+      categories: "المواد",
       status: "الحاله",
       resources: "الموارد",
-      totalCategories: "دورة",
-      addCategory: "إضافة دورة جديدة",
-      searchPlaceholder: "ابحث عن دورة...",
+      totalCategories: "ماده",
+      addCategory: "إضافة ماده جديدة",
+      searchPlaceholder: "ابحث عن ماده...",
       allCategories: "الكل",
       mainCategories: "رئيسية",
       subCategories: "فرعية",
-      tableName: "الكود",
+      tableName: "الماده",
       tableParent: "الرئيسية",
       tableActions: "الاجراءات",
-      noCategoriesFound: "لم يتم العثور على أي دورة.",
-      enterCategoryName: "أدخل كود الدورة",
+      noCategoriesFound: "لم يتم العثور على أي ماده.",
+      enterCategoryName: "أدخل اسم الماده",
+      enterCategoryCode: "أدخل رمز الماده",
       cancel: "إلغاء",
       create: "إنشاء",
       creating: "جارٍ الإنشاء...",
@@ -123,6 +130,7 @@ function Categories() {
 
     try {
       await createCourse({
+        name: courseName,
         code: course,
         image: uploadedImageUrl,
       }).unwrap();
@@ -172,6 +180,7 @@ function Categories() {
     try {
       await updateCourse({
         id: editingCategory._id,
+        name: courseName,
         code: course,
         image: uploadedImageUrl,
         isFeatured,
@@ -209,8 +218,8 @@ function Categories() {
               dir={language === "ar" ? "rtl" : "ltr"}
               className="text-lg lg:text-2xl font-black flex gap-2 lg:gap-5 items-center">
               {t.categories}:
-              <Badge icon={false}>
-                <Boxes strokeWidth={1} />
+              <Badge icon={false} className="p-1">
+                <Boxes className="size-5" strokeWidth={1} />
                 <p className="text-lg lg:text-sm">
                   {data?.total || 0} <span className="hidden lg:inline">{t.totalCategories}</span>
                 </p>
@@ -227,8 +236,8 @@ function Categories() {
           <Separator className="my-4 bg-black/20" />
 
           {/* Search + Filter */}
-          <div className="flex flex-col lg:flex-row items-center gap-3 mb-5">
-            <div className="relative w-full lg:w-64">
+          <div className="flex   flex-row items-center gap-3 mb-5">
+            <div className="relative w-full ">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                 <Search className="h-5 w-5" />
               </span>
@@ -239,6 +248,11 @@ function Categories() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full border bg-white border-gray-300 rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
               />
+            </div>
+            <div className="flex  w-full sm:w-[300px] justify-start gap-2">
+              <Badge icon={false}>{countIsPaid?.length || 0} paid</Badge>
+              <Badge icon={false}>{countIsClosed?.length || 0} closed</Badge>
+              <Badge icon={false}>{countIsAvailable?.length || 0} free</Badge>
             </div>
           </div>
 
@@ -262,12 +276,12 @@ function Categories() {
                           <img
                             src={cat.image}
                             alt={cat.code}
-                            className="size-10 sm:size-20 object-cover rounded-md"
+                            className="size-10  object-cover rounded-md"
                           />
                         ) : (
                           <img
                             src="/placeholder.png"
-                            className="size-10 sm:size-20 border-2  object-cover rounded-md"
+                            className="size-10  border-2  object-cover rounded-md"
                           />
                         )}
                         <span className="uppercase flex gap-1 items-center">{cat.code}</span>
@@ -342,9 +356,18 @@ function Categories() {
 
           <input
             type="text"
+            value={courseName}
+            onChange={(e) => setCourseName(e.target.value)}
+            placeholder={t.enterCategoryName}
+            className={clsx(
+              "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
+            )}
+          />
+          <input
+            type="text"
             value={course}
             onChange={(e) => setCourse(e.target.value)}
-            placeholder={t.enterCategoryName}
+            placeholder={t.enterCategoryCode}
             className={clsx(
               "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
             )}
@@ -388,9 +411,18 @@ function Categories() {
 
           <input
             type="text"
+            value={courseName}
+            onChange={(e) => setCourseName(e.target.value)}
+            placeholder={t.enterCategoryName}
+            className={clsx(
+              "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
+            )}
+          />
+          <input
+            type="text"
             value={course}
             onChange={(e) => setCourse(e.target.value)}
-            placeholder={t.enterCategoryName}
+            placeholder={t.enterCategoryCode}
             className={clsx(
               "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
             )}
