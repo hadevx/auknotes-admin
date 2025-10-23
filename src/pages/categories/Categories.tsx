@@ -33,6 +33,7 @@ function Categories() {
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [courseName, setCourseName] = useState("");
+  const [courseBadge, setCourseBadge] = useState("");
   const [course, setCourse] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isClosed, setIsClosed] = useState(false);
@@ -87,6 +88,7 @@ function Categories() {
     },
     ar: {
       categories: "المواد",
+      badge: "شعار",
       status: "الحاله",
       resources: "الموارد",
       totalCategories: "ماده",
@@ -182,6 +184,7 @@ function Categories() {
         id: editingCategory._id,
         name: courseName,
         code: course,
+        badge: courseBadge,
         image: uploadedImageUrl,
         isFeatured,
         isClosed,
@@ -414,6 +417,15 @@ function Categories() {
             value={courseName}
             onChange={(e) => setCourseName(e.target.value)}
             placeholder={t.enterCategoryName}
+            className={clsx(
+              "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
+            )}
+          />
+          <input
+            type="text"
+            value={courseBadge}
+            onChange={(e) => setCourseBadge(e.target.value)}
+            placeholder={t.badge}
             className={clsx(
               "w-full border bg-white border-gray-300 rounded-lg py-3 pl-4 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
             )}
