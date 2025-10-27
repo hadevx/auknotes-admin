@@ -114,7 +114,7 @@ function UserDetails() {
       ) : (
         <div
           className={clsx(
-            "px-4 min-h-screen lg:w-4xl py-3 w-full mb-10 flex flex-col mt-[70px] lg:mt-[50px]"
+            "px-2 min-h-screen lg:w-4xl py-3 w-full mb-10 flex flex-col mt-[70px] lg:mt-[50px]"
           )}
           dir={language === "ar" ? "rtl" : "ltr"}>
           {/* Header */}
@@ -182,8 +182,8 @@ function UserDetails() {
                 </h2>
                 <button
                   onClick={() => navigate(-1)}
-                  className="px-2 py-1 flex items-center border bg-zinc-100 text-black text-sm rounded-full">
-                  Back <ArrowLeft className="size-4" />
+                  className="px-2 py-1 flex items-center border bg-zinc-100 text-black text-xs rounded-full">
+                  Back <ArrowLeft className="size-3" />
                 </button>
               </div>
 

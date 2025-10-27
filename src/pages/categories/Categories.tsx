@@ -41,7 +41,6 @@ function Categories() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [filterType, setFilterType] = useState("all");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
 
@@ -61,10 +60,6 @@ function Categories() {
   const categories = data?.courses || [];
   const pages = data?.pages || 1;
   console.log(categories);
-
-  const countIsPaid = categories?.filter((c: any) => c.isPaid);
-  const countIsClosed = categories?.filter((c: any) => c.isClosed);
-  const countIsAvailable = categories?.filter((c: any) => !c.isPaid && !c.isClosed);
 
   const labels: any = {
     en: {
@@ -206,12 +201,19 @@ function Categories() {
     if (isModalOpen) setTimeout(() => document.querySelector("input")?.focus(), 100);
   }, [isModalOpen]);
 
+  const showLock = (course: any) => {
+    if (course) {
+      if (course.isClosed || course.isPaid) {
+        return <Lock className="size-4" />;
+      }
+    }
+  };
   return (
     <Layout>
       {isLoadingCategories ? (
         <Loader />
       ) : (
-        <div className="px-4 mb-10 py-3 mt-[70px] lg:mt-[50px] w-full lg:max-w-4xl min-h-screen">
+        <div className="px-2 mb-10 py-3 mt-[70px] lg:mt-[50px] w-full lg:max-w-4xl min-h-screen">
           {/* Header */}
           <div
             className={`flex justify-between items-center ${
@@ -223,9 +225,7 @@ function Categories() {
               {t.categories}:
               <Badge icon={false} className="p-1">
                 <Boxes className="size-5" strokeWidth={1} />
-                <p className="text-lg lg:text-sm">
-                  {data?.total || 0} <span className="hidden lg:inline">{t.totalCategories}</span>
-                </p>
+                <p className="text-lg lg:text-lg">{data?.total || 0}</p>
               </Badge>
             </h1>
 
@@ -252,15 +252,10 @@ function Categories() {
                 className="w-full border bg-white border-gray-300 rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2"
               />
             </div>
-            <div className="flex  w-full sm:w-[300px] justify-start gap-2">
-              <Badge icon={false}>{countIsPaid?.length || 0} paid</Badge>
-              <Badge icon={false}>{countIsClosed?.length || 0} closed</Badge>
-              <Badge icon={false}>{countIsAvailable?.length || 0} free</Badge>
-            </div>
           </div>
 
           {/* Table */}
-          <div className="rounded-lg border p-5 bg-white">
+          <div className="rounded-lg border p-3 sm:p-5 bg-white">
             <table className="w-full text-sm text-left text-gray-700">
               <thead className="bg-white text-gray-900/50 font-semibold">
                 <tr>
@@ -287,27 +282,31 @@ function Categories() {
                             className="size-10  border-2  object-cover rounded-md"
                           />
                         )}
-                        <span className="uppercase flex gap-1 items-center">{cat.code}</span>
-                      </td>
-                      <td className="">
-                        <span className="uppercase flex gap-1 items-center">
-                          {cat.isClosed ? (
-                            <>
-                              <Lock className="size-4 text-rose-500" />
-                              <span className="text-xs text-rose-500 font-bold">Closed</span>
-                            </>
-                          ) : cat.isPaid ? (
-                            <>
-                              <Lock className="size-4 text-blue-500" />
-                              <span className="text-xs text-blue-500 font-bold">Paid</span>
-                            </>
-                          ) : (
-                            <span className="text-xs text-teal-500 font-bold">Open</span>
-                          )}
+                        <span className="flex items-center gap-1">
+                          {cat.code} {showLock(cat)}
                         </span>
                       </td>
                       <td className="">
                         <span className="uppercase flex gap-1 items-center">
+                          {cat.isClosed ? (
+                            <span className="flex gap-1 items-center bg-rose-50 border border-rose-500 px-1 sm:px-2 py-1 rounded-full">
+                              {/* <Lock className="size-3 text-rose-500" /> */}
+                              <span className="text-xs text-rose-500 font-bold">Closed</span>
+                            </span>
+                          ) : cat.isPaid ? (
+                            <span className="flex gap-1 items-center bg-orange-50 border border-orange-500 px-1 sm:px-2 py-1 rounded-full">
+                              {/* <Lock className="size-3 text-blue-500" /> */}
+                              <span className="text-xs text-orange-500 font-bold">Paid</span>
+                            </span>
+                          ) : (
+                            <span className="text-xs text-teal-500 bg-teal-50 border-teal-500 border px-1 sm:px-2 py-1 rounded-full font-bold">
+                              Open
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="">
+                        <span className=" flex gap-1 items-center">
                           {cat?.resources?.length || 0}
                         </span>
                       </td>

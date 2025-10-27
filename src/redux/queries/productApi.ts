@@ -8,6 +8,12 @@ export const productApi = api.injectEndpoints({
       }),
       providesTags: ["Product"],
     }),
+    getNumberOfProducts: builder.query({
+      query: () => ({
+        url: `/api/products/all`,
+      }),
+      providesTags: ["Product"],
+    }),
 
     getProductById: builder.query({
       query: (productId) => ({
@@ -115,4 +121,5 @@ export const {
   useUpdateCourseMutation,
   useGetAllCoursesQuery,
   useGetCourseByIdQuery,
+  useGetNumberOfProductsQuery,
 } = productApi;

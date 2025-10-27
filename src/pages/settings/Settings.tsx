@@ -58,7 +58,7 @@ function Settings() {
     <Layout>
       <div
         dir={language === "ar" ? "rtl" : ""}
-        className="px-4 w-full min-h-screen lg:w-4xl text-lg py-6 mt-[50px] space-y-5">
+        className="px-2 w-full min-h-screen lg:w-4xl text-lg py-6 mt-[50px] space-y-5">
         {/* Update Section */}
         <section>
           <div className="flex items-center justify-between mb-2">

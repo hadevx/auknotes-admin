@@ -8,9 +8,10 @@ import {
   useGetProductsByCourseQuery,
   useUpdateProductMutation,
   useGetCourseByIdQuery,
+  useGetNumberOfProductsQuery,
 } from "../../redux/queries/productApi";
 import Badge from "../../components/Badge";
-import { Box, Plus, Download, Trash2, Edit } from "lucide-react";
+import { Box, Plus, Trash2, Edit } from "lucide-react";
 import Loader from "../../components/Loader";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -31,6 +32,10 @@ function ProductList() {
   const [editingProduct, setEditingProduct] = useState<any>(null); // store product being edited
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const language = useSelector((state: any) => state.language.lang);
+
+  const { data: numberOfProducts } = useGetNumberOfProductsQuery(undefined);
+
+  console.log(numberOfProducts);
 
   const openEditModal = (product: any) => {
     setEditingProduct(product);
@@ -66,7 +71,6 @@ function ProductList() {
   const [type, setType] = useState<string>("");
   const { data } = useGetCourseByIdQuery(course);
 
-  console.log(data);
   const formattedCode = data?.code?.replace(/\s+/g, ""); // "CPEG100"
 
   console.log(formattedCode);
@@ -179,7 +183,7 @@ function ProductList() {
       {loadingProducts || loadingCourses ? (
         <Loader />
       ) : (
-        <div className="px-4 flex lg:w-4xl flex-col w-full min-h-screen lg:min-h-auto py-3 mt-[70px]">
+        <div className="px-2 flex lg:w-4xl flex-col w-full min-h-screen lg:min-h-auto py-3 mt-[70px]">
           {/* Header */}
           <div className="w-full">
             <div className="flex justify-between items-center flex-wrap gap-3" dir="rtl">
@@ -189,10 +193,7 @@ function ProductList() {
                 {texts[language].products}:
                 <Badge icon={false} className="p-1">
                   <Box className="size-5" strokeWidth={1} />
-                  <p className="text-lg lg:text-sm">
-                    {products?.length}{" "}
-                    <span className="hidden lg:inline">{texts[language].products}</span>
-                  </p>
+                  <p className="text-lg lg:text-lg">{numberOfProducts || 0}</p>
                 </Badge>
               </h1>
 
@@ -227,14 +228,14 @@ function ProductList() {
             </div>
 
             {/* Product Table */}
-            <div className="rounded-lg border lg:p-5 bg-white overflow-x-auto">
+            <div className="rounded-lg border p-3 lg:p-5 bg-white overflow-x-auto">
               <table className="w-full lg:min-w-[700px] rounded-lg border-gray-200 text-sm text-left text-gray-700">
                 <thead className="bg-white text-gray-900/50 font-semibold">
                   <tr>
-                    <th className="p-4 border-b">{texts[language].name}</th>
-                    <th className="p-4 border-b">{texts[language].type}</th>
-                    <th className="p-4 border-b">{texts[language].size}</th>
-                    <th className="p-4 border-b text-center">{texts[language].actions}</th>
+                    <th className="pb-2 border-b ">{texts[language].name}</th>
+                    <th className="pb-2 border-b text-center">{texts[language].type}</th>
+                    <th className="pb-2 border-b text-center">{texts[language].size}</th>
+                    <th className="pb-2 border-b text-center">{texts[language].actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
@@ -247,7 +248,7 @@ function ProductList() {
                   ) : (
                     products?.map((p: any) => (
                       <tr key={p._id}>
-                        <td className="p-4 flex items-center gap-2 font-semibold">
+                        <td className="py-2 flex items-center gap-2 font-semibold">
                           <img
                             src={
                               p.file?.url?.toLowerCase().endsWith(".pdf")
@@ -257,39 +258,30 @@ function ProductList() {
                                 ? "/powerpoint.png"
                                 : "/word.png"
                             }
-                            className="size-10 object-contain"
+                            className="size-10 object-cover rounded-md"
                           />
                           {p.name}
                         </td>
                         <td className="font-semibold text-gray-400">{p.type}</td>
                         <td className="font-semibold">
                           {p?.size && (
-                            <span className="text-xs text-gray-400 mt-1 block">
+                            <span className="text-xs text-gray-400  block">
                               {p?.size < 1024 * 1024
                                 ? `${(p?.size / 1024).toFixed(2)} KB`
                                 : `${(p?.size / 1024 / 1024).toFixed(2)} MB`}
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-4 flex justify-center gap-2">
-                          {p.file?.url && (
-                            <a
-                              target="_blank"
-                              href={p.file.url}
-                              download
-                              className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
-                              <Download className="size-4" />
-                            </a>
-                          )}
+                        <td className="py-2 flex justify-center gap-2">
                           <button
                             onClick={() => handleDeleteProduct(p._id)}
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
-                            <Trash2 className="size-4" />
+                            <Trash2 className="size-4 sm:size-5" />
                           </button>
                           <button
                             onClick={() => openEditModal(p)}
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
-                            <Edit className="size-4" />
+                            <Edit className="size-4 sm:size-5" />
                           </button>
                         </td>
                       </tr>
@@ -372,6 +364,8 @@ function ProductList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Update Product Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="flex flex-col">
           <DialogHeader>
@@ -381,6 +375,7 @@ function ProductList() {
           <div className="flex-1 overflow-y-auto mt-4 space-y-4">
             <input
               type="file"
+              // value={pdfFile}
               accept=".pdf,.doc,.docx,.ppt,.pptx"
               onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
               className="p-2 w-full border rounded-md"

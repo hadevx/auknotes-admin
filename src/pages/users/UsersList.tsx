@@ -67,7 +67,7 @@ function Customers() {
       {isLoading ? (
         <Loader />
       ) : (
-        <div className="lg:px-4 mb-10 lg:w-4xl w-full min-h-screen lg:min-h-auto flex text-xs lg:text-lg justify-between py-3 mt-[70px] lg:mt-[50px] px-4">
+        <div className="lg:px-4 mb-10 lg:w-4xl w-full min-h-screen lg:min-h-auto flex text-xs lg:text-lg justify-between py-3 mt-[70px] lg:mt-[50px] px-2">
           <div className="w-full">
             <div
               className={`flex justify-between items-center ${
@@ -79,17 +79,14 @@ function Customers() {
                 {t.users}:{" "}
                 <Badge icon={false} className="p-1">
                   <Users strokeWidth={1} className="size-5" />
-                  <p className="text-lg lg:text-sm">
-                    {totalUsers > 0 ? totalUsers : "0"}{" "}
-                    <span className="hidden lg:inline">{t.totalUsers}</span>
-                  </p>
+                  <p className="text-lg lg:text-lg">{totalUsers > 0 ? totalUsers : "0"} </p>
                 </Badge>
               </h1>
             </div>
             <Separator className="my-4 bg-black/20" />
 
             <div className="mt-5 mb-2 overflow-hidden">
-              <div className="relative w-full lg:w-64 mb-5">
+              <div className="relative w-full  mb-5">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                   <Search className="h-5 w-5" />
                 </span>
@@ -102,7 +99,7 @@ function Customers() {
                 />
               </div>
 
-              <div className="rounded-lg border p-5  bg-white">
+              <div className="rounded-lg border p-3 sm:p-5  bg-white">
                 <table className="w-full rounded-lg text-xs lg:text-sm border-gray-200 text-left text-gray-700">
                   <thead className="bg-white text-gray-900/50 font-semibold">
                     <tr>
@@ -118,7 +115,7 @@ function Customers() {
                           key={user._id}
                           className="cursor-pointer hover:bg-gray-100 transition-all duration-300 font-bold"
                           onClick={() => navigate(`/userlist/${user._id}`)}>
-                          <td className=" py-1 flex items-center gap-1">
+                          <td className=" py-2 flex items-center gap-1">
                             {user?.avatar ? (
                               <img
                                 src={`/avatar/${user.avatar}`}
@@ -135,13 +132,15 @@ function Customers() {
                               </div>
                             )}
                             <span className="ml-1">{user.name}</span>
-                            {user.isVerified && <img src="/verify.png" className="size-4" />}
-                            {user.isAdmin && <img src="/admin.png" className="size-4" />}
+                            {user.isVerified && (
+                              <img src="/verify.png" className="size-3 sm:size-4" />
+                            )}
+                            {user.isAdmin && <img src="/admin.png" className="size-3 sm:size-4" />}
                           </td>
-                          <td className=" py-5">{user.email}</td>
+                          <td className=" py-2">{user.email}</td>
                           {/* <td className="px-4 py-5">{user.phone}</td> */}
 
-                          <td className="py-5">{user.createdAt.substring(0, 10)}</td>
+                          <td className="py-2">{user.createdAt.substring(0, 10)}</td>
                         </tr>
                       ))
                     ) : (
