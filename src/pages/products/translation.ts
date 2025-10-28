@@ -2,6 +2,7 @@ export const texts: any = {
   en: {
     products: "Assets",
     addProduct: "Add new Asset",
+
     allCategories: "All Courses",
     minPrice: "Min Price",
     maxPrice: "Max Price",

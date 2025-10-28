@@ -124,7 +124,7 @@ function Customers() {
                               />
                             ) : (
                               <div
-                                className={`size-10 rounded-md text-lg flex items-center uppercase justify-center font-semibold ${
+                                className={`size-10 rounded-md text-sm flex items-center uppercase justify-center font-semibold ${
                                   user.isAdmin ? "bg-white text-black" : "bg-[#f84713] text-white"
                                 }`}>
                                 {user?.username?.charAt(0) +

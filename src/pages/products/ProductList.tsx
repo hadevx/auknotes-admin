@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { texts } from "./translation";
+import { Switch } from "@/components/ui/switch";
 
 function ProductList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,7 +33,7 @@ function ProductList() {
   const [editingProduct, setEditingProduct] = useState<any>(null); // store product being edited
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const language = useSelector((state: any) => state.language.lang);
-
+  const [isClosed, setIsClosed] = useState(false);
   const { data: numberOfProducts } = useGetNumberOfProductsQuery(undefined);
 
   console.log(numberOfProducts);
@@ -139,7 +140,7 @@ function ProductList() {
   };
   // Update product function
   const handleUpdateProduct = async () => {
-    if (!editingProduct) return;
+    /*   if (!editingProduct) return;
 
     let uploadedFile: { url: string; publicId: string; size: number } | undefined;
 
@@ -158,15 +159,16 @@ function ProductList() {
         toast.error(error?.data?.message || error?.error);
         return;
       }
-    }
+    } */
 
     try {
       await updateProduct({
         _id: editingProduct._id,
+        isClosed,
         name,
         course,
         type,
-        file: uploadedFile || editingProduct.file, // keep old file if no new file
+        // file: uploadedFile || editingProduct.file,
       }).unwrap();
 
       toast.success(language === "ar" ? "تم تعديل المنتج بنجاح" : "Product updated successfully");
@@ -233,9 +235,10 @@ function ProductList() {
                 <thead className="bg-white text-gray-900/50 font-semibold">
                   <tr>
                     <th className="pb-2 border-b ">{texts[language].name}</th>
-                    <th className="pb-2 border-b text-center">{texts[language].type}</th>
-                    <th className="pb-2 border-b text-center">{texts[language].size}</th>
-                    <th className="pb-2 border-b text-center">{texts[language].actions}</th>
+                    <th className="pb-2 border-b ">{texts[language].type}</th>
+                    <th className="pb-2 border-b ">{texts[language].status}</th>
+                    <th className="pb-2 border-b ">{texts[language].size}</th>
+                    <th className="pb-2 border-b ">{texts[language].actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
@@ -263,6 +266,17 @@ function ProductList() {
                           {p.name}
                         </td>
                         <td className="font-semibold text-gray-400">{p.type}</td>
+                        <td className="font-semibold uppercase text-gray-400">
+                          {p.isClosed ? (
+                            <span className="text-xs text-rose-500 bg-rose-50 border-rose-500 border px-1 sm:px-2 py-1 rounded-full font-bold">
+                              Closed
+                            </span>
+                          ) : (
+                            <span className="text-xs text-teal-500 bg-teal-50 border-teal-500 border px-1 sm:px-2 py-1 rounded-full font-bold">
+                              Open
+                            </span>
+                          )}
+                        </td>
                         <td className="font-semibold">
                           {p?.size && (
                             <span className="text-xs text-gray-400  block">
@@ -272,7 +286,7 @@ function ProductList() {
                             </span>
                           )}
                         </td>
-                        <td className="py-2 flex justify-center gap-2">
+                        <td className="py-2 flex  gap-2">
                           <button
                             onClick={() => handleDeleteProduct(p._id)}
                             className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
@@ -346,6 +360,7 @@ function ProductList() {
               <option value="Book">Book</option>
               <option value="Exam">Exam</option>
               <option value="Assignment">Assignment</option>
+              <option value="Report">Report</option>
               <option value="Syllabus">Syllabus</option>
             </select>
           </div>
@@ -373,13 +388,17 @@ function ProductList() {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto mt-4 space-y-4">
-            <input
+            <div className="flex items-center gap-2">
+              <label htmlFor="">Closed</label>
+              <Switch checked={isClosed} onCheckedChange={setIsClosed} />
+            </div>
+            {/*        <input
               type="file"
               // value={pdfFile}
               accept=".pdf,.doc,.docx,.ppt,.pptx"
               onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
               className="p-2 w-full border rounded-md"
-            />
+            /> */}
 
             <input
               type="text"
@@ -414,6 +433,7 @@ function ProductList() {
               <option value="Book">Book</option>
               <option value="Exam">Exam</option>
               <option value="Assignment">Assignment</option>
+              <option value="Report">Report</option>
               <option value="Syllabus">Syllabus</option>
             </select>
           </div>
