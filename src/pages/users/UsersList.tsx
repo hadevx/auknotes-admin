@@ -140,7 +140,17 @@ function Customers() {
                           <td className=" py-2">{user.email}</td>
                           {/* <td className="px-4 py-5">{user.phone}</td> */}
 
-                          <td className="py-2">{user.createdAt.substring(0, 10)}</td>
+                          <td className="py-2 ">
+                            {new Date(user.createdAt).toLocaleString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+
+                              hour12: true,
+                            })}
+                          </td>
                         </tr>
                       ))
                     ) : (
