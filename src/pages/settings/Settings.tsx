@@ -16,8 +16,6 @@ function Settings() {
   const [updateStoreStatus, { isLoading: loadingUpdateStatus }] = useUpdateStoreStatusMutation();
   const { data: storeStatus, refetch, isLoading } = useGetStoreStatusQuery(undefined);
 
-  console.log(storeStatus);
-
   const [status, setStatus] = useState("");
   const [banner, setBanner] = useState("");
   const [price, setPrice] = useState(0);
@@ -50,8 +48,8 @@ function Settings() {
 
   useEffect(() => {
     if (storeStatus?.[0]) {
-      setStatus(storeStatus[0].status || "");
-      setBanner(storeStatus[0].banner || "");
+      setStatus(storeStatus[0]?.status || "");
+      setBanner(storeStatus[0]?.banner || "");
     }
   }, [storeStatus]);
 
@@ -165,7 +163,7 @@ function Settings() {
                 </span>
                 {isLoading ? (
                   <Spinner className="border-t-black" />
-                ) : storeStatus?.[0].status === "active" ? (
+                ) : storeStatus?.[0]?.status === "active" ? (
                   <p className="capitalize text-teal-500">{language === "en" ? "Active" : "نشط"}</p>
                 ) : (
                   <p className="capitalize text-rose-500">
@@ -182,7 +180,7 @@ function Settings() {
                   <Spinner className="border-t-black" />
                 ) : (
                   <div className="flex flex-row-reverse gap-1">
-                    <p className=""> {storeStatus?.[0].price.toFixed(2)}</p>
+                    <p className=""> {storeStatus?.[0]?.price?.toFixed(2)}</p>
                     <p>KD</p>
                   </div>
                 )}
@@ -194,7 +192,7 @@ function Settings() {
                 {isLoading ? (
                   <Spinner className="border-t-black" />
                 ) : (
-                  <p>{formatDate(storeStatus?.[0].updatedAt)}</p>
+                  <p>{formatDate(storeStatus?.[0]?.updatedAt)}</p>
                 )}
               </div>
             </div>
@@ -207,7 +205,7 @@ function Settings() {
                 <Spinner className="border-t-black" />
               ) : (
                 <p className="whitespace-pre-wrap max-w-md break-words">
-                  {storeStatus?.[0].banner?.trim()
+                  {storeStatus?.[0]?.banner?.trim()
                     ? storeStatus[0].banner
                     : language === "en"
                     ? "No banner"
