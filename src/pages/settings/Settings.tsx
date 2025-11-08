@@ -20,6 +20,7 @@ function Settings() {
 
   const [status, setStatus] = useState("");
   const [banner, setBanner] = useState("");
+  const [price, setPrice] = useState(0);
 
   const language = useSelector((state: any) => state.language.lang);
   const dispatch = useDispatch();
@@ -27,7 +28,7 @@ function Settings() {
   // const [language, setLanguage] = useState<"en" | "ar">("en");
 
   const handleUpdateStoreStatus = async () => {
-    await updateStoreStatus({ status, banner: banner.trim() });
+    await updateStoreStatus({ status, banner: banner.trim(), price });
     setBanner("");
     toast.success(
       language === "en" ? "Store status updated successfully" : "تم تحديث حالة المتجر بنجاح"
@@ -97,6 +98,18 @@ function Settings() {
                   <option value="maintenance">{language === "en" ? "Maintenance" : "صيانة"}</option>
                 </select>
               </div>
+              <div className="w-full lg:w-full">
+                <label className="block mb-1 text-sm font-medium text-zinc-700">
+                  {language === "en" ? "Courses Price" : "سعر المواد"}
+                </label>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(Number(e.target.value))}
+                  placeholder="Enter Price"
+                  className=" cursor-pointer px-4 py-2 border rounded-lg outline-0 shadow-sm focus:ring-2 focus:ring-blue-500 w-full"
+                />
+              </div>
 
               <div className="w-full lg:w-[200px]">
                 <button
@@ -161,6 +174,19 @@ function Settings() {
                 )}
               </div>
 
+              <div>
+                <span className="block text-xs text-zinc-500">
+                  {language === "en" ? "Last updated" : "السعر"}
+                </span>
+                {isLoading ? (
+                  <Spinner className="border-t-black" />
+                ) : (
+                  <div className="flex flex-row-reverse gap-1">
+                    <p className=""> {storeStatus?.[0].price.toFixed(2)}</p>
+                    <p>KD</p>
+                  </div>
+                )}
+              </div>
               <div>
                 <span className="block text-xs text-zinc-500">
                   {language === "en" ? "Last updated" : "آخر تحديث"}
