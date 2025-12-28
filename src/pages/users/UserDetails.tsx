@@ -4,7 +4,7 @@ import Layout from "../../Layout";
 import clsx from "clsx";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
-import { ArrowLeft, Loader2Icon } from "lucide-react";
+import { ArrowLeft, Loader2Icon, ShieldBan, ShieldCheck, Trash2, BadgeCheck } from "lucide-react";
 import {
   useDeleteUserMutation,
   useGetUserDetailsQuery,
@@ -29,8 +29,8 @@ import { useSelector } from "react-redux";
 function UserDetails() {
   const { userID } = useParams();
   const navigate = useNavigate();
-
   const language = useSelector((state: any) => state.language.lang); // 'ar' | 'en'
+  const dir = language === "ar" ? "rtl" : "ltr";
 
   // Add purchased course
   const [selectedCourse, setSelectedCourse] = useState("");
@@ -56,27 +56,92 @@ function UserDetails() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { refetch } = useGetUsersQuery(undefined);
 
+  const labels: any = {
+    en: {
+      title: "User Details",
+      back: "Back",
+      personal: "Personal Information",
+      purchased: "Purchased Courses",
+      addCourse: "Add Purchased Course",
+      select: "Select a course",
+      add: "Add",
+      addAll: "Add all paid courses",
+      adding: "Adding...",
+      deleteUser: "Delete User",
+      delete: "Delete",
+      cancel: "Cancel",
+      confirmDelete: "Are you sure you want to delete this user?",
+      cannotDeleteAdmin: "Cannot delete an admin user.",
+      deleted: "User deleted successfully",
+      block: "Block User",
+      unblock: "Unblock User",
+      verified: "User Verified",
+      verify: "Verify User",
+      blocked: "Blocked",
+      notBlocked: "Not Blocked",
+      isVerified: "Verified",
+      unverified: "Unverified",
+      username: "Username",
+      name: "Name",
+      email: "Email",
+      noCourses: "No courses purchased yet.",
+      paidCount: "Paid courses",
+      purchasedCount: "Purchased",
+      noPaid: "No paid courses to add",
+      addedCourse: "Course added successfully",
+      addError: "Error adding course",
+    },
+    ar: {
+      title: "تفاصيل المستخدم",
+      back: "رجوع",
+      personal: "المعلومات الشخصية",
+      purchased: "الدورات المشتراة",
+      addCourse: "إضافة دورة للمستخدم",
+      select: "اختر دورة",
+      add: "إضافة",
+      addAll: "إضافة كل الدورات المدفوعة",
+      adding: "جارٍ الإضافة...",
+      deleteUser: "حذف المستخدم",
+      delete: "حذف",
+      cancel: "إلغاء",
+      confirmDelete: "هل أنت متأكد أنك تريد حذف هذا المستخدم؟",
+      cannotDeleteAdmin: "لا يمكن حذف مستخدم مسؤول",
+      deleted: "تم حذف المستخدم بنجاح",
+      block: "حظر المستخدم",
+      unblock: "إزالة الحظر",
+      verified: "تم توثيق المستخدم",
+      verify: "توثيق",
+      blocked: "محظور",
+      notBlocked: "غير محظور",
+      isVerified: "موثق",
+      unverified: "غير موثق",
+      username: "اسم المستخدم",
+      name: "الاسم",
+      email: "البريد الإلكتروني",
+      noCourses: "لم يتم شراء أي دورة بعد.",
+      paidCount: "دورات مدفوعة",
+      purchasedCount: "مشتراة",
+      noPaid: "لا توجد دورات مدفوعة لإضافتها",
+      addedCourse: "تمت إضافة الدورة بنجاح",
+      addError: "خطأ بإضافة الدورة",
+    },
+  };
+
+  const t = labels[language];
+
   const handleDeleteUser = async () => {
     try {
       if (user?.isAdmin) {
-        toast.error(
-          language === "ar" ? "لا يمكن حذف مستخدم مسؤول" : "Cannot delete an admin user."
-        );
+        toast.error(t.cannotDeleteAdmin);
         return;
       }
 
       await deleteUser(userID).unwrap();
-      toast.success(language === "ar" ? "تم حذف المستخدم بنجاح" : "User deleted successfully");
+      toast.success(t.deleted);
       refetch();
       navigate("/admin/userlist");
     } catch (error: any) {
-      const errorMsg =
-        error?.data?.message ||
-        error?.message ||
-        (language === "ar"
-          ? "حدث خطأ أثناء حذف المستخدم"
-          : "An error occurred while deleting the user.");
-      toast.error(errorMsg);
+      toast.error(error?.data?.message || error?.message || "Error");
     }
   };
 
@@ -86,7 +151,7 @@ function UserDetails() {
       refetchUser();
       toast.success(language === "ar" ? "تم تحديث حالة الحظر" : "Block status updated");
     } catch (err: any) {
-      toast.error(err?.data?.message || (language === "ar" ? "حدث خطأ" : "Error toggling block"));
+      toast.error(err?.data?.message || (language === "ar" ? "حدث خطأ" : "Error"));
     }
   };
 
@@ -94,9 +159,9 @@ function UserDetails() {
     try {
       await setToVerified(id).unwrap();
       refetchUser();
-      toast.success(language === "ar" ? "تم توثيق المستخدم" : "User Verified");
+      toast.success(t.verified);
     } catch (err: any) {
-      toast.error(err?.data?.message || (language === "ar" ? "حدث خطأ" : "Error verifying user"));
+      toast.error(err?.data?.message || (language === "ar" ? "حدث خطأ" : "Error"));
     }
   };
 
@@ -104,20 +169,17 @@ function UserDetails() {
     if (!selectedCourse) return;
     try {
       await addPurchasedCourse({ userId: userID, courseId: selectedCourse }).unwrap();
-      toast.success(language === "ar" ? "تمت إضافة الدورة بنجاح" : "Course added successfully");
+      toast.success(t.addedCourse);
       setSelectedCourse("");
       refetchUser();
     } catch (error: any) {
-      toast.error(
-        error?.data?.message || (language === "ar" ? "خطأ بإضافة الدورة" : "Error adding course")
-      );
+      toast.error(error?.data?.message || t.addError);
     }
   };
 
-  // ✅ Add ALL paid courses at once
   const handleAddAllCourses = async () => {
     if (!isPaidCourses?.length) {
-      toast.info(language === "ar" ? "لا توجد دورات مدفوعة لإضافتها" : "No paid courses to add");
+      toast.info(t.noPaid);
       return;
     }
 
@@ -129,7 +191,6 @@ function UserDetails() {
       );
 
       const results = await Promise.allSettled(tasks);
-
       const successCount = results.filter((r) => r.status === "fulfilled").length;
       const failCount = results.filter((r) => r.status === "rejected").length;
 
@@ -155,191 +216,207 @@ function UserDetails() {
     }
   };
 
+  const purchasedCount = user?.purchasedCourses?.length || 0;
+
   return (
     <Layout>
       {loadingUser ? (
         <Loader />
       ) : (
         <div
+          dir={dir}
           className={clsx(
-            "px-2 min-h-screen lg:w-4xl py-3 w-full mb-10 flex flex-col mt-[70px] lg:mt-[50px]"
-          )}
-          dir={language === "ar" ? "rtl" : "ltr"}>
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <h1 className="text-lg font-bold">
-              {language === "ar" ? "معلومات المستخدم:" : "User's Information:"}
-            </h1>
-            <div className="flex gap-1">
-              {!user?.isAdmin && (
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="select-none text-xs lg:text-base bg-gradient-to-t from-rose-500 to-rose-400 text-white px-2 py-1 rounded-md font-bold hover:opacity-80">
-                  {language === "ar" ? "حذف المستخدم" : "Delete User"}
-                </button>
-              )}
-
-              <button
-                onClick={async () => {
-                  await handleToggleBlockUser(userID);
-                  refetch();
-                }}
-                className={clsx(
-                  "select-none text-xs lg:text-base font-bold px-2 py-1 rounded-md shadow-md transition-all duration-200",
-                  user?.isBlocked
-                    ? "bg-gradient-to-t from-teal-600 to-teal-500 hover:opacity-85 text-white"
-                    : "bg-gradient-to-t from-rose-500 to-rose-400 hover:opacity-85 text-white"
-                )}>
-                {user?.isBlocked
-                  ? language === "ar"
-                    ? "إزالة الحظر"
-                    : "Unblock User"
-                  : language === "ar"
-                  ? "حظر المستخدم"
-                  : "Block User"}
-              </button>
-
-              <button
-                onClick={async () => {
-                  await handleVerifyUser(userID);
-                  refetch();
-                }}
-                className={clsx(
-                  "select-none text-xs lg:text-base font-bold px-2 lg:px-2 py-1 rounded-md shadow-md transition-all duration-200",
-                  user?.isVerified
-                    ? "bg-gradient-to-t from-teal-600 to-teal-500 hover:opacity-85 text-white"
-                    : "bg-gradient-to-t from-rose-500 to-rose-400 hover:opacity-85 text-white"
-                )}>
-                {user?.isVerified
-                  ? language === "ar"
-                    ? "تم التوثيق"
-                    : "User Verified"
-                  : language === "ar"
-                  ? "توثيق"
-                  : "Verify User"}
-              </button>
-            </div>
-          </div>
-
-          <Separator className="my-4 bg-black/20" />
-
-          {/* Personal Info */}
-          <div className="relative w-full p-6 bg-white rounded-xl border">
-            <section>
-              <div className="flex justify-between items-center mb-6 border-b pb-2 border-gray-200">
-                <h2 className="text-lg font-bold text-gray-800">
-                  {language === "ar" ? "المعلومات الشخصية" : "Personal Information"}
-                </h2>
+            "px-3 sm:px-6 lg:px-8 py-6 mt-[70px] lg:mt-[50px] mb-10 w-4xl min-h-screen"
+          )}>
+          <div className="mx-auto w-full max-w-5xl">
+            {/* Top Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => navigate(-1)}
-                  className="px-2 py-1 flex items-center border bg-zinc-100 text-black text-xs rounded-full">
-                  Back <ArrowLeft className="size-3" />
+                  className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 hover:bg-gray-50">
+                  <ArrowLeft className="size-4" />
+                  {t.back}
                 </button>
+
+                <h1 className="text-lg sm:text-2xl font-extrabold text-gray-900">{t.title}</h1>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex flex-col">
-                  <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "اسم المستخدم:" : "Username:"}
-                  </span>
-                  <span className="mt-1 font-semibold text-gray-700">{user?.username}@</span>
-                </div>
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-2">
+                {!user?.isAdmin && (
+                  <Button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-rose-500 hover:bg-rose-600 text-white font-bold">
+                    <Trash2 className="size-4 mr-2" />
+                    {t.deleteUser}
+                  </Button>
+                )}
 
-                <div className="flex flex-col">
-                  <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "الاسم:" : "Name:"}
-                  </span>
-                  <span className="mt-1 font-semibold text-gray-700">{user?.name}</span>
-                </div>
-
-                <div className="flex flex-col">
-                  <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "البريد الإلكتروني:" : "Email:"}
-                  </span>
-                  <a
-                    href={`mailto:${user?.email}`}
-                    className="mt-1 font-semibold text-blue-500 hover:text-blue-600 underline break-words whitespace-pre-line">
-                    {user?.email}
-                  </a>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "محظور:" : "Blocked:"}
-                  </span>
+                <Button
+                  onClick={async () => {
+                    await handleToggleBlockUser(userID);
+                    refetch();
+                  }}
+                  className={clsx(
+                    "text-white font-bold",
+                    user?.isBlocked ? "bg-teal-600 hover:bg-teal-700" : "bg-gray-900 hover:bg-black"
+                  )}>
                   {user?.isBlocked ? (
-                    <Badge icon={false} variant="danger" className="px-2 py-1 text-xs rounded-full">
-                      {language === "ar" ? "محظور" : "Blocked"}
-                    </Badge>
+                    <>
+                      <ShieldCheck className="size-4 mr-2" />
+                      {t.unblock}
+                    </>
                   ) : (
-                    <Badge
-                      icon={false}
-                      variant="success"
-                      className="px-2 py-1 text-xs rounded-full">
-                      {language === "ar" ? "غير محظور" : "Not Blocked"}
-                    </Badge>
+                    <>
+                      <ShieldBan className="size-4 mr-2" />
+                      {t.block}
+                    </>
                   )}
+                </Button>
+
+                <Button
+                  onClick={async () => {
+                    await handleVerifyUser(userID);
+                    refetch();
+                  }}
+                  className={clsx(
+                    "text-white font-bold",
+                    user?.isVerified
+                      ? "bg-teal-600 hover:bg-teal-700"
+                      : "bg-indigo-600 hover:bg-indigo-700"
+                  )}>
+                  <BadgeCheck className="size-4 mr-2" />
+                  {user?.isVerified ? t.isVerified : t.verify}
+                </Button>
+              </div>
+            </div>
+
+            <Separator className="my-5 bg-black/10" />
+
+            {/* Profile Card */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  {user?.avatar ? (
+                    <img
+                      src={`/avatar/${user.avatar}`}
+                      alt={user?.name}
+                      className="size-12 rounded-xl object-cover border border-gray-200"
+                    />
+                  ) : (
+                    <div className="size-12 rounded-xl bg-gray-900 text-white grid place-items-center font-extrabold uppercase">
+                      {(user?.username?.charAt(0) || "U") +
+                        (user?.username?.charAt((user?.username?.length || 1) - 1) || "U")}
+                    </div>
+                  )}
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-lg font-extrabold text-gray-900 truncate">{user?.name}</p>
+
+                      {user?.isVerified ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 text-xs font-bold">
+                          <BadgeCheck className="size-4" />
+                          {t.isVerified}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 text-xs font-bold">
+                          {t.unverified}
+                        </span>
+                      )}
+
+                      {user?.isBlocked ? (
+                        <span className="inline-flex items-center rounded-full bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 text-xs font-bold">
+                          {t.blocked}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2.5 py-1 text-xs font-bold">
+                          {t.notBlocked}
+                        </span>
+                      )}
+                    </div>
+
+                    <a
+                      href={`mailto:${user?.email}`}
+                      className="mt-1 block text-sm text-blue-600 hover:text-blue-700 underline break-words">
+                      {user?.email}
+                    </a>
+                  </div>
                 </div>
 
-                <div className="flex gap-3 items-center">
-                  <span className="text-gray-400 text-sm">
-                    {language === "ar" ? "توثيق:" : "Verified:"}
-                  </span>
-                  {user?.isVerified ? (
-                    <Badge
-                      icon={false}
-                      variant="success"
-                      className="px-2 py-1 rounded-full text-xs">
-                      {language === "ar" ? "موثق" : "Verified"}
-                    </Badge>
-                  ) : (
-                    <Badge icon={false} variant="danger" className="px-2 py-1 text-xs rounded-full">
-                      {language === "ar" ? "غير موثق" : "Unverified"}
-                    </Badge>
-                  )}
+                <div className="flex items-center gap-2">
+                  <Badge icon={false} className="px-3 py-1.5 rounded-full">
+                    <img src="/premium.png" className="size-4" alt="premium" />
+                    <span className="font-bold">
+                      {purchasedCount} {t.purchasedCount}
+                    </span>
+                  </Badge>
                 </div>
               </div>
-            </section>
-          </div>
 
-          {/* Purchased Courses */}
-          <div className="relative mt-3 w-full p-6 bg-white rounded-xl border">
-            <section>
-              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-6">
-                {language === "ar" ? "الدورات المشتراة" : "Purchased Courses"}
+              <Separator className="my-5 bg-black/10" />
+
+              {/* Personal Information */}
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 mb-4">
+                {t.personal}
               </h2>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-bold text-gray-500">{t.username}</p>
+                  <p className="mt-1 font-extrabold text-gray-900">{user?.username}@</p>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-bold text-gray-500">{t.name}</p>
+                  <p className="mt-1 font-extrabold text-gray-900">{user?.name}</p>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 sm:col-span-2">
+                  <p className="text-xs font-bold text-gray-500">{t.email}</p>
+                  <p className="mt-1 font-extrabold text-gray-900 break-words">{user?.email}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Purchased Courses */}
+            <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h2 className="text-base sm:text-lg font-extrabold text-gray-900">{t.purchased}</h2>
+
+                <Badge icon={false} className="px-3 py-1.5 rounded-full">
+                  <span className="font-bold">{purchasedCount}</span>
+                </Badge>
+              </div>
+
               {user?.purchasedCourses?.length ? (
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-2">
                   {user?.purchasedCourses.map((course: any) => (
-                    <div
+                    <span
                       key={course._id}
-                      className="flex justify-between bg-black text-xs sm:text-sm text-white items-center px-2 py-1 border rounded-full shadow-sm transition">
-                      <p>{course.code}</p>
-                    </div>
+                      className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-sm font-bold text-gray-900">
+                      {course.code}
+                    </span>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">
-                  {language === "ar" ? "لم يتم شراء أي دورة بعد." : "No courses purchased yet."}
-                </p>
+                <p className="text-gray-500 text-sm">{t.noCourses}</p>
               )}
-            </section>
-          </div>
+            </div>
 
-          {/* Add Purchased Course */}
-          <div className="relative mt-3 w-full p-6 bg-white rounded-xl border">
-            <section>
-              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-6">
-                {language === "ar" ? "إضافة دورة للمستخدم" : "Add Purchased Course"}
+            {/* Add Purchased Course */}
+            <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 mb-4">
+                {t.addCourse}
               </h2>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="border rounded-lg px-3 py-2 flex-1">
-                  <option value="">{language === "ar" ? "اختر دورة" : "Select a course"}</option>
+                  className="w-full sm:flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-gray-300">
+                  <option value="">{t.select}</option>
                   {isPaidCourses?.map((course: any) => (
                     <option key={course._id} value={course._id}>
                       {course.code}
@@ -350,28 +427,25 @@ function UserDetails() {
                 <Button
                   disabled={!selectedCourse}
                   onClick={handleAddCourse}
-                  className="bg-black text-white">
-                  {language === "ar" ? "إضافة" : "Add"}
+                  className="bg-gray-900 hover:bg-black text-white font-bold rounded-xl">
+                  {t.add}
                 </Button>
 
-                {/* ✅ One button to add ALL paid courses */}
                 <Button
                   disabled={isAddingAll || !isPaidCourses.length}
                   onClick={handleAddAllCourses}
-                  className="bg-black text-white">
+                  className="bg-gray-900 hover:bg-black text-white font-bold rounded-xl">
                   {isAddingAll ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2Icon className="animate-spin size-4" />
-                      {language === "ar" ? "جارٍ الإضافة..." : "Adding..."}
+                      {t.adding}
                     </span>
-                  ) : language === "ar" ? (
-                    "إضافة كل الدورات المدفوعة"
                   ) : (
-                    "Add all paid courses"
+                    t.addAll
                   )}
                 </Button>
               </div>
-            </section>
+            </div>
           </div>
         </div>
       )}
@@ -380,30 +454,22 @@ function UserDetails() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{language === "ar" ? "حذف المستخدم" : "Delete User"}</DialogTitle>
+            <DialogTitle>{t.deleteUser}</DialogTitle>
           </DialogHeader>
 
-          {language === "ar"
-            ? "هل أنت متأكد أنك تريد حذف هذا المستخدم؟"
-            : "Are you sure you want to delete this user?"}
+          {t.confirmDelete}
 
           <DialogFooter className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              {language === "ar" ? "إلغاء" : "Cancel"}
+              {t.cancel}
             </Button>
 
             <Button
               disabled={loadingDeleteUser}
               variant="destructive"
-              className="bg-gradient-to-t from-rose-500 to-rose-400"
+              className="bg-rose-500 hover:bg-rose-600"
               onClick={handleDeleteUser}>
-              {loadingDeleteUser ? (
-                <Loader2Icon className="animate-spin" />
-              ) : language === "ar" ? (
-                "حذف"
-              ) : (
-                "Delete"
-              )}
+              {loadingDeleteUser ? <Loader2Icon className="animate-spin" /> : t.delete}
             </Button>
           </DialogFooter>
         </DialogContent>
