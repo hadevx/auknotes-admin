@@ -236,7 +236,7 @@ function ProductList() {
                   <tr>
                     <th className="pb-2 border-b ">{texts[language].name}</th>
                     <th className="pb-2 border-b ">{texts[language].type}</th>
-                    <th className="pb-2 border-b ">{texts[language].status}</th>
+                    {/* <th className="pb-2 border-b ">{texts[language].status}</th> */}
                     <th className="pb-2 border-b ">{texts[language].size}</th>
                     <th className="pb-2 border-b ">{texts[language].actions}</th>
                   </tr>
@@ -266,7 +266,7 @@ function ProductList() {
                           {p.name}
                         </td>
                         <td className="font-semibold text-gray-400">{p.type}</td>
-                        <td className="font-semibold uppercase text-gray-400">
+                        {/*  <td className="font-semibold uppercase text-gray-400">
                           {p.isClosed ? (
                             <span className="text-xs text-rose-500 bg-rose-50 border-rose-500 border px-1 sm:px-2 py-1 rounded-full font-bold">
                               Closed
@@ -276,7 +276,7 @@ function ProductList() {
                               Open
                             </span>
                           )}
-                        </td>
+                        </td> */}
                         <td className="font-semibold">
                           {p?.size && (
                             <span className="text-xs text-gray-400  block">

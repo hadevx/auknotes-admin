@@ -142,7 +142,11 @@ function Customers() {
                           </td>
                           <td className=" py-2">{user.email}</td>
                           <td className=" py-2">
-                            {user?.purchasedCourses?.length > 0 ? "yes" : "no"}
+                            {user?.purchasedCourses?.length > 0 ? (
+                              <img src="/premium.png" className="size-5" />
+                            ) : (
+                              "--"
+                            )}
                           </td>
                           {/* <td className="px-4 py-5">{user.phone}</td> */}
 
