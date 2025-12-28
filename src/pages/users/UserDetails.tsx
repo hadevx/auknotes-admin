@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "../../Layout";
 import clsx from "clsx";
@@ -32,12 +32,16 @@ function UserDetails() {
 
   const language = useSelector((state: any) => state.language.lang); // 'ar' | 'en'
 
-  // State for adding purchased course
+  // Add purchased course
   const [selectedCourse, setSelectedCourse] = useState("");
+  const [isAddingAll, setIsAddingAll] = useState(false);
+
   const [addPurchasedCourse] = useAddPurchasedCourseMutation();
   const { data: allCourses } = useGetAllCoursesQuery(undefined);
 
-  const isPaidCourses = allCourses?.filter((c: any) => c.isPaid);
+  const isPaidCourses = useMemo(() => {
+    return allCourses?.filter((c: any) => c.isPaid) ?? [];
+  }, [allCourses]);
 
   const [toggleBlockUser] = useToggleBlockUserMutation();
   const [setToVerified] = useSetToVerifiedMutation();
@@ -64,7 +68,6 @@ function UserDetails() {
       await deleteUser(userID).unwrap();
       toast.success(language === "ar" ? "تم حذف المستخدم بنجاح" : "User deleted successfully");
       refetch();
-
       navigate("/admin/userlist");
     } catch (error: any) {
       const errorMsg =
@@ -81,9 +84,9 @@ function UserDetails() {
     try {
       await toggleBlockUser(id).unwrap();
       refetchUser();
-      toast.success("User blocked");
+      toast.success(language === "ar" ? "تم تحديث حالة الحظر" : "Block status updated");
     } catch (err: any) {
-      toast.error(err?.data?.message || "Error toggling block status");
+      toast.error(err?.data?.message || (language === "ar" ? "حدث خطأ" : "Error toggling block"));
     }
   };
 
@@ -91,19 +94,64 @@ function UserDetails() {
     try {
       await setToVerified(id).unwrap();
       refetchUser();
-      toast.success("User Verified");
+      toast.success(language === "ar" ? "تم توثيق المستخدم" : "User Verified");
     } catch (err: any) {
-      toast.error(err?.data?.message || "Error verifying user");
+      toast.error(err?.data?.message || (language === "ar" ? "حدث خطأ" : "Error verifying user"));
     }
   };
 
   const handleAddCourse = async () => {
+    if (!selectedCourse) return;
     try {
       await addPurchasedCourse({ userId: userID, courseId: selectedCourse }).unwrap();
       toast.success(language === "ar" ? "تمت إضافة الدورة بنجاح" : "Course added successfully");
+      setSelectedCourse("");
       refetchUser();
     } catch (error: any) {
-      toast.error(error?.data?.message || "Error adding course");
+      toast.error(
+        error?.data?.message || (language === "ar" ? "خطأ بإضافة الدورة" : "Error adding course")
+      );
+    }
+  };
+
+  // ✅ Add ALL paid courses at once
+  const handleAddAllCourses = async () => {
+    if (!isPaidCourses?.length) {
+      toast.info(language === "ar" ? "لا توجد دورات مدفوعة لإضافتها" : "No paid courses to add");
+      return;
+    }
+
+    setIsAddingAll(true);
+
+    try {
+      const tasks = isPaidCourses.map((course: any) =>
+        addPurchasedCourse({ userId: userID, courseId: course._id }).unwrap()
+      );
+
+      const results = await Promise.allSettled(tasks);
+
+      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      const failCount = results.filter((r) => r.status === "rejected").length;
+
+      if (failCount === 0) {
+        toast.success(
+          language === "ar"
+            ? `تمت إضافة كل الدورات (${successCount}) بنجاح`
+            : `All courses added successfully (${successCount})`
+        );
+      } else {
+        toast.warning(
+          language === "ar"
+            ? `تمت إضافة (${successCount}) وفشل (${failCount})`
+            : `Added (${successCount}) and failed (${failCount})`
+        );
+      }
+
+      await refetchUser();
+    } catch (error: any) {
+      toast.error(error?.data?.message || (language === "ar" ? "حدث خطأ" : "Something went wrong"));
+    } finally {
+      setIsAddingAll(false);
     }
   };
 
@@ -118,7 +166,7 @@ function UserDetails() {
           )}
           dir={language === "ar" ? "rtl" : "ltr"}>
           {/* Header */}
-          <div className={`flex justify-between items-center`}>
+          <div className="flex justify-between items-center">
             <h1 className="text-lg font-bold">
               {language === "ar" ? "معلومات المستخدم:" : "User's Information:"}
             </h1>
@@ -130,6 +178,7 @@ function UserDetails() {
                   {language === "ar" ? "حذف المستخدم" : "Delete User"}
                 </button>
               )}
+
               <button
                 onClick={async () => {
                   await handleToggleBlockUser(userID);
@@ -149,6 +198,7 @@ function UserDetails() {
                   ? "حظر المستخدم"
                   : "Block User"}
               </button>
+
               <button
                 onClick={async () => {
                   await handleVerifyUser(userID);
@@ -174,10 +224,10 @@ function UserDetails() {
           <Separator className="my-4 bg-black/20" />
 
           {/* Personal Info */}
-          <div className="relative  w-full p-6 bg-white rounded-xl border">
+          <div className="relative w-full p-6 bg-white rounded-xl border">
             <section>
-              <div className="flex justify-between items-center  mb-6 border-b pb-2 border-gray-200">
-                <h2 className="text-lg font-bold text-gray-800 ">
+              <div className="flex justify-between items-center mb-6 border-b pb-2 border-gray-200">
+                <h2 className="text-lg font-bold text-gray-800">
                   {language === "ar" ? "المعلومات الشخصية" : "Personal Information"}
                 </h2>
                 <button
@@ -194,12 +244,14 @@ function UserDetails() {
                   </span>
                   <span className="mt-1 font-semibold text-gray-700">{user?.username}@</span>
                 </div>
+
                 <div className="flex flex-col">
                   <span className="text-gray-400 text-sm">
                     {language === "ar" ? "الاسم:" : "Name:"}
                   </span>
                   <span className="mt-1 font-semibold text-gray-700">{user?.name}</span>
                 </div>
+
                 <div className="flex flex-col">
                   <span className="text-gray-400 text-sm">
                     {language === "ar" ? "البريد الإلكتروني:" : "Email:"}
@@ -210,11 +262,12 @@ function UserDetails() {
                     {user?.email}
                   </a>
                 </div>
-                <div className="flex items-center gap-3 ">
+
+                <div className="flex items-center gap-3">
                   <span className="text-gray-400 text-sm">
                     {language === "ar" ? "محظور:" : "Blocked:"}
                   </span>
-                  {user.isBlocked ? (
+                  {user?.isBlocked ? (
                     <Badge icon={false} variant="danger" className="px-2 py-1 text-xs rounded-full">
                       {language === "ar" ? "محظور" : "Blocked"}
                     </Badge>
@@ -227,6 +280,7 @@ function UserDetails() {
                     </Badge>
                   )}
                 </div>
+
                 <div className="flex gap-3 items-center">
                   <span className="text-gray-400 text-sm">
                     {language === "ar" ? "توثيق:" : "Verified:"}
@@ -260,10 +314,8 @@ function UserDetails() {
                   {user?.purchasedCourses.map((course: any) => (
                     <div
                       key={course._id}
-                      className="flex justify-between bg-black text-xs sm:text-sm text-white items-center px-2 py-1 border rounded-full shadow-sm  transition">
-                      <div>
-                        <p className="">{course.code}</p>
-                      </div>
+                      className="flex justify-between bg-black text-xs sm:text-sm text-white items-center px-2 py-1 border rounded-full shadow-sm transition">
+                      <p>{course.code}</p>
                     </div>
                   ))}
                 </div>
@@ -282,7 +334,7 @@ function UserDetails() {
                 {language === "ar" ? "إضافة دورة للمستخدم" : "Add Purchased Course"}
               </h2>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
@@ -301,6 +353,23 @@ function UserDetails() {
                   className="bg-black text-white">
                   {language === "ar" ? "إضافة" : "Add"}
                 </Button>
+
+                {/* ✅ One button to add ALL paid courses */}
+                <Button
+                  disabled={isAddingAll || !isPaidCourses.length}
+                  onClick={handleAddAllCourses}
+                  className="bg-black text-white">
+                  {isAddingAll ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2Icon className="animate-spin size-4" />
+                      {language === "ar" ? "جارٍ الإضافة..." : "Adding..."}
+                    </span>
+                  ) : language === "ar" ? (
+                    "إضافة كل الدورات المدفوعة"
+                  ) : (
+                    "Add all paid courses"
+                  )}
+                </Button>
               </div>
             </section>
           </div>
@@ -313,13 +382,16 @@ function UserDetails() {
           <DialogHeader>
             <DialogTitle>{language === "ar" ? "حذف المستخدم" : "Delete User"}</DialogTitle>
           </DialogHeader>
+
           {language === "ar"
             ? "هل أنت متأكد أنك تريد حذف هذا المستخدم؟"
             : "Are you sure you want to delete this user?"}
+
           <DialogFooter className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               {language === "ar" ? "إلغاء" : "Cancel"}
             </Button>
+
             <Button
               disabled={loadingDeleteUser}
               variant="destructive"

@@ -36,6 +36,7 @@ function Customers() {
       admin: "مدير",
       user: "مستخدم",
       noUsersFound: "لم يتم العثور على مستخدمين.",
+      purchased: "مشترك",
     },
   };
   const t = labels[language];
@@ -50,6 +51,7 @@ function Customers() {
   const pages = data?.pages || 1;
   const totalUsers = data?.total || 0;
 
+  console.log(users);
   const navigate = useNavigate();
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
 
@@ -105,6 +107,7 @@ function Customers() {
                     <tr>
                       <th className="pb-2  border-b">{t.name}</th>
                       <th className="pb-2  border-b">{t.email}</th>
+                      <th className="pb-2  border-b">{t.purchased}</th>
                       <th className="pb-2 border-b">{t.registeredIn}</th>
                     </tr>
                   </thead>
@@ -138,6 +141,9 @@ function Customers() {
                             {user.isAdmin && <img src="/admin.png" className="size-3 sm:size-4" />}
                           </td>
                           <td className=" py-2">{user.email}</td>
+                          <td className=" py-2">
+                            {user?.purchasedCourses?.length > 0 ? "yes" : "no"}
+                          </td>
                           {/* <td className="px-4 py-5">{user.phone}</td> */}
 
                           <td className="py-2 ">

@@ -50,6 +50,7 @@ function Settings() {
     if (storeStatus?.[0]) {
       setStatus(storeStatus[0]?.status || "");
       setBanner(storeStatus[0]?.banner || "");
+      setPrice(storeStatus[0]?.price || 0);
     }
   }, [storeStatus]);
 

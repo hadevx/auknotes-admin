@@ -70,6 +70,13 @@ const userApi = api.injectEndpoints({
         body: { courseId },
       }),
     }),
+    addAllCourses: builder.mutation({
+      query: ({ userId, courseId }: any) => ({
+        url: `/api/users/add-course/${userId}`,
+        method: "PUT",
+        body: { courseId },
+      }),
+    }),
   }),
 });
 
