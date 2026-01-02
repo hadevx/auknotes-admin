@@ -76,10 +76,12 @@ function Categories() {
       tableParent: "Parent",
       tableActions: "Actions",
       noCategoriesFound: "No courses found.",
-      enterCategoryName: "Enter course code",
+      enterCategoryName: "Enter course name",
+      enterCategoryCode: "Enter course code",
       cancel: "Cancel",
       create: "Create",
       creating: "Creating...",
+      badge: "Enter course badge",
     },
     ar: {
       categories: "المواد",

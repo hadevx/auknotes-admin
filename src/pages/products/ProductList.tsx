@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Layout from "../../Layout";
 import {
   useUploadProductFileMutation,
@@ -7,11 +7,10 @@ import {
   useGetAllCoursesQuery,
   useGetProductsByCourseQuery,
   useUpdateProductMutation,
-  useGetCourseByIdQuery,
   useGetNumberOfProductsQuery,
 } from "../../redux/queries/productApi";
 import Badge from "../../components/Badge";
-import { Box, Plus, Trash2, Edit } from "lucide-react";
+import { Box, Plus, Trash2, Edit, Upload, FileText, X } from "lucide-react";
 import Loader from "../../components/Loader";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -28,101 +27,168 @@ import { texts } from "./translation";
 import { Switch } from "@/components/ui/switch";
 
 function ProductList() {
+  const language = useSelector((state: any) => state.language.lang);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [editingProduct, setEditingProduct] = useState<any>(null); // store product being edited
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const language = useSelector((state: any) => state.language.lang);
+
   const [isClosed, setIsClosed] = useState(false);
   const { data: numberOfProducts } = useGetNumberOfProductsQuery(undefined);
 
-  console.log(numberOfProducts);
+  // Fetch all courses
+  const { data: courses, isLoading: loadingCourses } = useGetAllCoursesQuery(undefined);
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
+
+  // ✅ Auto-select first course
+  useEffect(() => {
+    if (!loadingCourses && courses?.length > 0 && !selectedCourse) {
+      setSelectedCourse(courses[0]?._id);
+    }
+  }, [courses, loadingCourses, selectedCourse]);
+
+  // Fetch products by selected course
+  const { data: products, isLoading: loadingProducts } = useGetProductsByCourseQuery({
+    courseId: selectedCourse,
+  });
+
+  const [deleteProduct, { isLoading: deleting }] = useDeleteProductMutation();
+  const [updateProduct, { isLoading: updating }] = useUpdateProductMutation();
+  const [uploadProductFile, { isLoading: loadingUploadImage }] = useUploadProductFileMutation();
+  const [createProduct, { isLoading: loadingCreateProduct }] = useCreateProductMutation();
+
+  // ✅ form state
+  const [name, setName] = useState<string>("");
+  const [course, setCourse] = useState<string>("");
+  const [type, setType] = useState<string>("");
+
+  const resetForm = () => {
+    setName("");
+    setCourse("");
+    setType("");
+    setPdfFile(null);
+    setIsClosed(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const iconFromUrl = (url?: string) => {
+    const u = (url || "").toLowerCase();
+    if (u.endsWith(".pdf")) return "/pdf.png";
+    if (u.endsWith(".ppt") || u.endsWith(".pptx")) return "/powerpoint.png";
+    return "/word.png";
+  };
+
+  const extFromFile = (file?: File | null) => {
+    if (!file) return "";
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".pdf")) return "PDF";
+    if (name.endsWith(".pptx")) return "PPTX";
+    if (name.endsWith(".ppt")) return "PPT";
+    if (name.endsWith(".docx")) return "DOCX";
+    if (name.endsWith(".doc")) return "DOC";
+    return "FILE";
+  };
+
+  const sizeLabel = (size?: number) => {
+    if (!size) return "—";
+    return size < 1024 * 1024
+      ? `${(size / 1024).toFixed(2)} KB`
+      : `${(size / 1024 / 1024).toFixed(2)} MB`;
+  };
+
+  // ✅ Smart defaults when opening create modal: pre-fill course + try infer name/type from file
+  const openCreateModal = () => {
+    resetForm();
+    setCourse(selectedCourse || "");
+    setType("Note"); // default
+    setIsModalOpen(true);
+  };
 
   const openEditModal = (product: any) => {
     setEditingProduct(product);
     setName(product.name);
     setCourse(product.course);
     setType(product.type);
-    setPdfFile(null); // reset pdf file
+    setIsClosed(Boolean(product.isClosed));
+    setPdfFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setIsEditModalOpen(true);
   };
-  // Fetch all courses
-  const { data: courses, isLoading: loadingCourses } = useGetAllCoursesQuery(undefined);
-  const [selectedCourse, setSelectedCourse] = useState<string>("");
-  // ✅ Automatically select the first course when loaded
-  useEffect(() => {
-    if (!loadingCourses && courses?.length > 0 && !selectedCourse) {
-      setSelectedCourse(courses[0]?._id);
-    }
-  }, [courses, loadingCourses]);
-  // Fetch products by selected course
-  const { data: products, isLoading: loadingProducts } = useGetProductsByCourseQuery({
-    courseId: selectedCourse,
-  });
 
-  console.log(products);
+  // ✅ quick add: drag/drop
+  const [dragOver, setDragOver] = useState(false);
 
-  const [deleteProduct] = useDeleteProductMutation();
-  const [updateProduct] = useUpdateProductMutation();
-  const [uploadProductFile, { isLoading: loadingUploadImage }] = useUploadProductFileMutation();
-  const [createProduct, { isLoading: loadingCreateProduct }] = useCreateProductMutation();
+  const handlePickFile = (file: File | null) => {
+    if (!file) return;
 
-  const [name, setName] = useState<string>("");
-  const [course, setCourse] = useState<string>("");
-  const [type, setType] = useState<string>("");
-  const { data } = useGetCourseByIdQuery(course);
-
-  const formattedCode = data?.code?.replace(/\s+/g, ""); // "CPEG100"
-
-  console.log(formattedCode);
-  const resetForm = () => {
-    setName("");
-    setCourse("");
-    setType("");
-    setPdfFile(null);
-  };
-
-  const handleCreateProduct = async () => {
-    // Make sure a course is selected
-    if (!course) {
-      toast.error("Please select a course before uploading");
+    const allowed = [".pdf", ".doc", ".docx", ".ppt", ".pptx"];
+    const lower = file.name.toLowerCase();
+    const ok = allowed.some((e) => lower.endsWith(e));
+    if (!ok) {
+      toast.error("Allowed: PDF, DOC/DOCX, PPT/PPTX");
       return;
     }
 
+    setPdfFile(file);
+
+    // infer name from file (without extension) ONLY if name empty
+    const base = file.name.replace(/\.[^/.]+$/, "");
+    setName((prev) => (prev?.trim() ? prev : base));
+
+    // infer type from filename keywords (simple)
+    const t = lower.includes("exam")
+      ? "Exam"
+      : lower.includes("assignment") || lower.includes("hw")
+      ? "Assignment"
+      : lower.includes("syllabus")
+      ? "Syllabus"
+      : lower.includes("report")
+      ? "Report"
+      : lower.includes("book")
+      ? "Book"
+      : "Note";
+    setType((prev) => (prev ? prev : t));
+  };
+
+  const handleCreateProduct = async () => {
+    // ✅ super clear validation
+    if (!course) return toast.error("Please select a course");
+    if (!pdfFile) return toast.error("Please upload a file");
+    if (!name.trim()) return toast.error("Please enter a name");
+    if (!type) return toast.error("Please select a type");
+
     let uploadedFile: { url: string; publicId: string; size: number } | null = null;
 
-    // Upload file if selected
-    if (pdfFile) {
-      try {
-        const formData = new FormData();
-        formData.append("file", pdfFile);
+    // Upload file
+    try {
+      const formData = new FormData();
+      formData.append("file", pdfFile);
 
-        console.log("FormData course:", course); // Debug
+      const res = await uploadProductFile({ formData, course }).unwrap();
 
-        // Send FormData to backend
-        const res = await uploadProductFile({ formData, course }).unwrap();
-
-        uploadedFile = {
-          url: res.file.fileUrl,
-          publicId: res.file.publicId,
-          size: pdfFile.size,
-        };
-      } catch (error: any) {
-        toast.error(error?.data?.message || error?.error || "File upload failed");
-        return;
-      }
+      uploadedFile = {
+        url: res.file.fileUrl,
+        publicId: res.file.publicId,
+        size: pdfFile.size,
+      };
+    } catch (error: any) {
+      toast.error(error?.data?.message || error?.error || "File upload failed");
+      return;
     }
 
-    // Create the product in DB
+    // Create
     try {
       await createProduct({
-        name,
-        course, // this is the course ID
+        name: name.trim(),
+        course,
         type,
         file: uploadedFile,
       }).unwrap();
 
-      toast.success("Product created successfully");
+      toast.success("Resource added ✅");
       setIsModalOpen(false);
       resetForm();
     } catch (error: any) {
@@ -131,6 +197,9 @@ function ProductList() {
   };
 
   const handleDeleteProduct = async (productId: string) => {
+    const ok = window.confirm(language === "ar" ? "متأكد تبي تحذف؟" : "Delete this resource?");
+    if (!ok) return;
+
     try {
       await deleteProduct(productId).unwrap();
       toast.success(language === "ar" ? "تم حذف المنتج بنجاح" : "Product deleted successfully");
@@ -138,44 +207,22 @@ function ProductList() {
       toast.error(language === "ar" ? "فشل حذف المنتج" : "Failed to delete product");
     }
   };
-  // Update product function
+
   const handleUpdateProduct = async () => {
-    /*   if (!editingProduct) return;
-
-    let uploadedFile: { url: string; publicId: string; size: number } | undefined;
-
-    // Upload new file if selected
-    if (pdfFile) {
-      try {
-        const formData = new FormData();
-        formData.append("file", pdfFile);
-        const res = await uploadProductFile({ formData, course }).unwrap();
-        uploadedFile = {
-          url: res.file.fileUrl,
-          publicId: res.file.publicId,
-          size: pdfFile.size,
-        };
-      } catch (error: any) {
-        toast.error(error?.data?.message || error?.error);
-        return;
-      }
-    } */
-
     try {
       await updateProduct({
         _id: editingProduct._id,
         isClosed,
-        name,
+        name: name.trim(),
         course,
         type,
-        // file: uploadedFile || editingProduct.file,
       }).unwrap();
 
       toast.success(language === "ar" ? "تم تعديل المنتج بنجاح" : "Product updated successfully");
       setIsEditModalOpen(false);
       setEditingProduct(null);
       resetForm();
-    } catch (error) {
+    } catch {
       toast.error(language === "ar" ? "فشل تعديل المنتج" : "Failed to update product");
     }
   };
@@ -199,8 +246,9 @@ function ProductList() {
                 </Badge>
               </h1>
 
+              {/* ✅ same button style, but easier (auto-fill) */}
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={openCreateModal}
                 className="bg-black text-white font-bold flex items-center gap-1 text-sm lg:text-md shadow-md px-3 py-2 rounded-md hover:bg-black/70 transition">
                 {texts[language].addProduct}
                 <Plus />
@@ -210,7 +258,7 @@ function ProductList() {
             <Separator className="my-4 bg-black/20" />
 
             {/* Course Filters */}
-            <div className="mb-5">
+            <div className="mb-5 flex items-center gap-3 flex-wrap">
               <select
                 value={selectedCourse || ""}
                 onChange={(e) => setSelectedCourse(e.target.value)}
@@ -236,7 +284,6 @@ function ProductList() {
                   <tr>
                     <th className="pb-2 border-b ">{texts[language].name}</th>
                     <th className="pb-2 border-b ">{texts[language].type}</th>
-                    {/* <th className="pb-2 border-b ">{texts[language].status}</th> */}
                     <th className="pb-2 border-b ">{texts[language].size}</th>
                     <th className="pb-2 border-b ">{texts[language].actions}</th>
                   </tr>
@@ -253,43 +300,25 @@ function ProductList() {
                       <tr key={p._id}>
                         <td className="py-2 flex items-center gap-2 font-semibold">
                           <img
-                            src={
-                              p.file?.url?.toLowerCase().endsWith(".pdf")
-                                ? "/pdf.png"
-                                : p.file?.url?.toLowerCase().endsWith(".ppt") ||
-                                  p.file?.url?.toLowerCase().endsWith(".pptx")
-                                ? "/powerpoint.png"
-                                : "/word.png"
-                            }
+                            src={iconFromUrl(p.file?.url)}
                             className="size-10 object-cover rounded-md"
+                            alt="file"
                           />
                           {p.name}
                         </td>
                         <td className="font-semibold text-gray-400">{p.type}</td>
-                        {/*  <td className="font-semibold uppercase text-gray-400">
-                          {p.isClosed ? (
-                            <span className="text-xs text-rose-500 bg-rose-50 border-rose-500 border px-1 sm:px-2 py-1 rounded-full font-bold">
-                              Closed
-                            </span>
-                          ) : (
-                            <span className="text-xs text-teal-500 bg-teal-50 border-teal-500 border px-1 sm:px-2 py-1 rounded-full font-bold">
-                              Open
-                            </span>
-                          )}
-                        </td> */}
                         <td className="font-semibold">
-                          {p?.size && (
-                            <span className="text-xs text-gray-400  block">
-                              {p?.size < 1024 * 1024
-                                ? `${(p?.size / 1024).toFixed(2)} KB`
-                                : `${(p?.size / 1024 / 1024).toFixed(2)} MB`}
-                            </span>
+                          {p?.size ? (
+                            <span className="text-xs text-gray-400 block">{sizeLabel(p.size)}</span>
+                          ) : (
+                            <span className="text-xs text-gray-300 block">—</span>
                           )}
                         </td>
-                        <td className="py-2 flex  gap-2">
+                        <td className="py-2 flex gap-2">
                           <button
+                            disabled={deleting}
                             onClick={() => handleDeleteProduct(p._id)}
-                            className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm">
+                            className="text-black hover:bg-zinc-200 bg-zinc-100 p-2 rounded-md text-sm disabled:opacity-60">
                             <Trash2 className="size-4 sm:size-5" />
                           </button>
                           <button
@@ -308,7 +337,7 @@ function ProductList() {
         </div>
       )}
 
-      {/* Create Product Modal */}
+      {/* ========================= Create Product Modal (EASIER) ========================= */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="flex flex-col">
           <DialogHeader>
@@ -316,56 +345,171 @@ function ProductList() {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto mt-4 space-y-4">
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx,.ppt,.pptx"
-              onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-              className="p-2 w-full border rounded-md"
-            />
+            {/* ✅ Step 1: choose course first (prefilled) */}
+            <div className="space-y-1">
+              <div className="text-xs font-bold text-gray-500">
+                {language === "ar" ? "1) اختر المادة" : "1) Select course"}
+              </div>
 
-            <input
-              type="text"
-              placeholder={texts[language].productName}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="p-2 w-full border rounded-md"
-            />
+              <select
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                className="p-2 w-full border rounded-md">
+                <option value="" disabled>
+                  {texts[language].selectCategory}
+                </option>
+                {loadingCourses ? (
+                  <option>Loading...</option>
+                ) : (
+                  courses?.map((c: any) => (
+                    <option key={c._id} value={c._id}>
+                      {c.code}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
 
-            <select
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
-              className="p-2 w-full border rounded-md">
-              <option value="" disabled>
-                {texts[language].selectCategory}
-              </option>
-              {loadingCourses ? (
-                <option>Loading...</option>
-              ) : (
-                courses?.map((c: any) => (
-                  <option key={c._id} value={c._id}>
-                    {c.code}
-                  </option>
-                ))
-              )}
-            </select>
+            {/* ✅ Step 2: drag drop upload (same look, just more functional) */}
+            <div className="space-y-1">
+              <div className="text-xs font-bold text-gray-500">
+                {language === "ar" ? "2) ارفع الملف" : "2) Upload file"}
+              </div>
 
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="p-2 w-full border rounded-md">
-              <option value="" disabled>
-                {texts[language].selectType}
-              </option>
-              <option value="Note">Note</option>
-              <option value="Book">Book</option>
-              <option value="Exam">Exam</option>
-              <option value="Assignment">Assignment</option>
-              <option value="Report">Report</option>
-              <option value="Syllabus">Syllabus</option>
-            </select>
+              <div
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOver(true);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOver(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  handlePickFile(file || null);
+                }}
+                className={`w-full rounded-md border p-3 transition ${
+                  dragOver ? "bg-zinc-50 border-black" : "bg-white"
+                }`}>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Upload className="size-4 text-gray-500" />
+                    <p className="text-sm font-semibold text-gray-700">
+                      {language === "ar"
+                        ? "اسحب الملف هنا أو اضغط للاختيار"
+                        : "Drag file here or click to choose"}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-zinc-100 hover:bg-zinc-200 transition px-3 py-2 rounded-md text-sm font-bold">
+                    {language === "ar" ? "اختيار ملف" : "Choose file"}
+                  </button>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx"
+                  onChange={(e) => handlePickFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+
+                {/* ✅ file preview */}
+                {pdfFile && (
+                  <div className="mt-3 flex items-center justify-between gap-3 border rounded-md p-2 bg-white">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <img
+                        src={iconFromUrl(pdfFile.name)}
+                        className="size-8 rounded-md"
+                        alt="file"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-800 truncate">{pdfFile.name}</p>
+                        <p className="text-xs text-gray-400 font-semibold">
+                          {extFromFile(pdfFile)} • {sizeLabel(pdfFile.size)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPdfFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="p-2 rounded-md bg-zinc-100 hover:bg-zinc-200 transition"
+                      aria-label="remove file">
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ✅ Step 3: details (auto-filled from filename) */}
+            <div className="space-y-1">
+              <div className="text-xs font-bold text-gray-500">
+                {language === "ar" ? "3) التفاصيل" : "3) Details"}
+              </div>
+
+              <input
+                type="text"
+                placeholder={texts[language].productName}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="p-2 w-full border rounded-md"
+              />
+
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="p-2 w-full border rounded-md">
+                <option value="" disabled>
+                  {texts[language].selectType}
+                </option>
+                <option value="Note">Note</option>
+                <option value="Book">Book</option>
+                <option value="Exam">Exam</option>
+                <option value="Assignment">Assignment</option>
+                <option value="Report">Report</option>
+                <option value="Syllabus">Syllabus</option>
+              </select>
+
+              {/* ✅ micro helper */}
+              <div className="text-xs text-gray-400 font-semibold flex items-center gap-2">
+                <FileText className="size-4" />
+                {language === "ar"
+                  ? "الاسم والنوع يتعبّون تلقائياً من اسم الملف (تقدر تعدّلهم)."
+                  : "Name/type auto-filled from filename (you can edit)."}
+              </div>
+            </div>
           </div>
 
           <DialogFooter className="mt-6 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => {
+                setIsModalOpen(false);
+                resetForm();
+              }}>
+              {language === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+
             <Button
               variant="default"
               disabled={loadingCreateProduct || loadingUploadImage}
@@ -380,7 +524,7 @@ function ProductList() {
         </DialogContent>
       </Dialog>
 
-      {/* Update Product Modal */}
+      {/* ============================ Update Product Modal (same) ============================ */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="flex flex-col">
           <DialogHeader>
@@ -389,16 +533,9 @@ function ProductList() {
 
           <div className="flex-1 overflow-y-auto mt-4 space-y-4">
             <div className="flex items-center gap-2">
-              <label htmlFor="">Closed</label>
+              <label htmlFor="">{language === "ar" ? "مغلق" : "Closed"}</label>
               <Switch checked={isClosed} onCheckedChange={setIsClosed} />
             </div>
-            {/*        <input
-              type="file"
-              // value={pdfFile}
-              accept=".pdf,.doc,.docx,.ppt,.pptx"
-              onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-              className="p-2 w-full border rounded-md"
-            /> */}
 
             <input
               type="text"
@@ -439,8 +576,11 @@ function ProductList() {
           </div>
 
           <DialogFooter className="mt-6 flex justify-end gap-2">
-            <Button variant="default" disabled={loadingUploadImage} onClick={handleUpdateProduct}>
-              {loadingUploadImage ? texts[language].uploading : texts[language].update}
+            <Button
+              variant="default"
+              disabled={loadingUploadImage || updating}
+              onClick={handleUpdateProduct}>
+              {loadingUploadImage || updating ? texts[language].uploading : texts[language].update}
             </Button>
           </DialogFooter>
         </DialogContent>

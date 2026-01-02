@@ -32,6 +32,7 @@ export const texts: any = {
     action: "Actions",
     type: "Type",
     size: "Size",
+    actions: "Actions",
   },
   ar: {
     products: "الموارد",
