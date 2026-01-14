@@ -14,7 +14,6 @@ import {
   ArrowUpDown,
   ChevronRight,
   Copy,
-  Download,
 } from "lucide-react";
 import Badge from "../../components/Badge";
 import { Separator } from "../../components/ui/separator";
@@ -24,7 +23,7 @@ import Paginate from "@/components/Paginate";
 import { toast } from "react-toastify";
 
 type SortKey = "newest" | "oldest" | "name" | "email";
-type FilterKey = "all" | "purchased" | "verified" | "admin";
+// type FilterKey = "all" | "purchased" | "verified" | "admin";
 
 function Customers() {
   const language = useSelector((state: any) => state.language.lang);
@@ -94,7 +93,6 @@ function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  const [filter, setFilter] = useState<FilterKey>("all");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
 
   const { data, isLoading } = useGetUsersQuery<any>({
@@ -106,14 +104,9 @@ function Customers() {
   const pages = data?.pages || 1;
   const totalUsers = data?.total || 0;
 
-  const purchasedUsersCount = useMemo(
-    () => users.filter((u: any) => (u?.purchasedCourses?.length || 0) > 0).length,
-    [users]
-  );
-
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, filter, sortKey]);
+  }, [searchQuery, , sortKey]);
 
   const processedUsers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -125,14 +118,6 @@ function Customers() {
         const email = (u?.email || "").toLowerCase();
         return name.includes(q) || email.includes(q);
       });
-    }
-
-    if (filter === "purchased") {
-      list = list.filter((u: any) => (u?.purchasedCourses?.length || 0) > 0);
-    } else if (filter === "verified") {
-      list = list.filter((u: any) => Boolean(u?.isVerified));
-    } else if (filter === "admin") {
-      list = list.filter((u: any) => Boolean(u?.isAdmin));
     }
 
     const byStr = (a: any, b: any, key: "name" | "email") =>
@@ -151,7 +136,7 @@ function Customers() {
     });
 
     return list;
-  }, [users, searchQuery, filter, sortKey]);
+  }, [users, searchQuery, sortKey]);
 
   const clearSearch = () => setSearchQuery("");
 
@@ -164,25 +149,6 @@ function Customers() {
       minute: "2-digit",
       hour12: true,
     });
-
-  const Pill = ({
-    active,
-    onClick,
-    children,
-  }: {
-    active: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold border transition ${
-        active ? "bg-black text-white border-black" : "bg-white hover:bg-zinc-50 border-gray-200"
-      }`}>
-      {children}
-    </button>
-  );
 
   const uniqueEmails = useMemo(() => {
     const emails = processedUsers.map((u: any) => String(u?.email || "").trim()).filter(Boolean);
@@ -213,21 +179,6 @@ function Customers() {
     copyToClipboard(uniqueEmails.join(", "));
   };
 
-  const handleExportCSV = () => {
-    if (!uniqueEmails.length) return toast.error(t.nothingToCopy);
-
-    const csv = ["email", ...uniqueEmails.map((e) => `"${e.replace(/"/g, '""')}"`)].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "auknotes-emails.csv";
-    a.click();
-
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <Layout>
       {isLoading ? (
@@ -243,7 +194,7 @@ function Customers() {
               className={`flex justify-between items-start gap-3 flex-wrap ${
                 language === "ar" ? "flex-row-reverse" : ""
               }`}>
-              <div className="w-full sm:w-auto">
+              <div className="w-full sm:w-auto flex gap-5 flex-col sm:flex-row">
                 <h1
                   dir={language === "ar" ? "rtl" : "ltr"}
                   className="text-lg lg:text-2xl font-black flex gap-2 lg:gap-4 items-center flex-wrap">
@@ -252,112 +203,21 @@ function Customers() {
                     <Users strokeWidth={1} className="size-5" />
                     <p className="text-lg lg:text-lg">{totalUsers || 0}</p>
                   </Badge>
-                  <Badge icon={false} className="p-1">
-                    <img src="/premium.png" className="size-5" alt="premium" />
-                    <p className="text-lg lg:text-lg">
-                      {purchasedUsersCount} {t.purchasedUsers}
-                    </p>
-                  </Badge>
                 </h1>
 
-                {/* ✅ aligned buttons (same row, same height, wrap nicely) */}
-                <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
-                  <div className="flex items-center justify-between sm:justify-start gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={handleCopyAllEmails}
-                      className="h-10 inline-flex items-center justify-center gap-2 rounded-lg px-4 text-xs sm:text-sm font-bold border bg-black text-white border-black hover:bg-black/90 transition w-full sm:w-auto">
-                      <Copy className="size-4" />
-                      {t.copyEmails}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleExportCSV}
-                      className="h-10 inline-flex items-center justify-center gap-2 rounded-lg px-4 text-xs sm:text-sm font-bold border bg-white hover:bg-zinc-50 transition w-full sm:w-auto">
-                      <Download className="size-4" />
-                      {t.exportCSV}
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] text-gray-500 sm:mt-0">{t.tip}</p>
-
-                  <p className="text-sm text-gray-500 sm:ml-auto">
-                    {t.results}:{" "}
-                    <span className="font-bold text-gray-800">{processedUsers.length}</span>
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyAllEmails}
+                  className="h-10 inline-flex items-center justify-center gap-2 rounded-lg px-4 text-xs sm:text-sm font-bold border bg-black text-white border-black hover:bg-black/90 transition w-full sm:w-auto">
+                  <Copy className="size-4" />
+                  {t.copyEmails}
+                </button>
               </div>
 
               {/* Desktop pills */}
-              <div className="hidden sm:flex items-center gap-2 flex-wrap">
-                <Pill active={filter === "all"} onClick={() => setFilter("all")}>
-                  {t.all}
-                </Pill>
-                <Pill active={filter === "purchased"} onClick={() => setFilter("purchased")}>
-                  <span className="inline-flex items-center gap-2">
-                    <Crown className="size-4" /> {t.premium}
-                  </span>
-                </Pill>
-                <Pill active={filter === "verified"} onClick={() => setFilter("verified")}>
-                  <span className="inline-flex items-center gap-2">
-                    <CheckCircle2 className="size-4" /> {t.verified}
-                  </span>
-                </Pill>
-                <Pill active={filter === "admin"} onClick={() => setFilter("admin")}>
-                  <span className="inline-flex items-center gap-2">
-                    <Shield className="size-4" /> {t.admin}
-                  </span>
-                </Pill>
-              </div>
             </div>
 
             <Separator className="my-4 bg-black/20" />
-
-            {/* Mobile filter chips (scroll) + sort dropdown */}
-            <div className="sm:hidden">
-              <div className="text-xs font-bold text-gray-500 mb-2">{t.quickFilters}</div>
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
-                <Pill active={filter === "all"} onClick={() => setFilter("all")}>
-                  {t.all}
-                </Pill>
-                <Pill active={filter === "purchased"} onClick={() => setFilter("purchased")}>
-                  <span className="inline-flex items-center gap-2">
-                    <Crown className="size-4" /> {t.premium}
-                  </span>
-                </Pill>
-                <Pill active={filter === "verified"} onClick={() => setFilter("verified")}>
-                  <span className="inline-flex items-center gap-2">
-                    <CheckCircle2 className="size-4" /> {t.verified}
-                  </span>
-                </Pill>
-                <Pill active={filter === "admin"} onClick={() => setFilter("admin")}>
-                  <span className="inline-flex items-center gap-2">
-                    <Shield className="size-4" /> {t.admin}
-                  </span>
-                </Pill>
-              </div>
-
-              <div className="mt-3">
-                <div className="text-xs font-bold text-gray-500 mb-2">{t.sort}</div>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                    <ArrowUpDown className="h-5 w-5" />
-                  </span>
-                  <select
-                    value={sortKey}
-                    onChange={(e) => setSortKey(e.target.value as SortKey)}
-                    className="w-full cursor-pointer border bg-white border-gray-300 rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 focus:border-2">
-                    <option value="newest">{t.newest}</option>
-                    <option value="oldest">{t.oldest}</option>
-                    <option value="name">{t.sortName}</option>
-                    <option value="email">{t.sortEmail}</option>
-                  </select>
-                </div>
-              </div>
-
-              <Separator className="my-4 bg-black/10" />
-            </div>
 
             {/* Search + desktop sort */}
             <div className="mt-2 mb-3 overflow-hidden">

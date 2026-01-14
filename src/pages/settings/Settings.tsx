@@ -24,6 +24,8 @@ function Settings() {
   const [updateStoreStatus, { isLoading: loadingUpdateStatus }] = useUpdateStoreStatusMutation();
   const { data: storeStatus, refetch, isLoading } = useGetStoreStatusQuery(undefined);
 
+  console.log(storeStatus);
+
   const [status, setStatus] = useState<"active" | "maintenance" | "">("");
   const [banner, setBanner] = useState("");
   const [price, setPrice] = useState<number>(0);

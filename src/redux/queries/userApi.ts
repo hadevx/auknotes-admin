@@ -70,6 +70,14 @@ const userApi = api.injectEndpoints({
         body: { courseId },
       }),
     }),
+    removePurchasedCourse: builder.mutation({
+      query: ({ userId, courseId }: any) => ({
+        url: `/api/users/remove-course/${userId}`,
+        method: "PUT",
+        body: { courseId },
+      }),
+    }),
+
     addAllCourses: builder.mutation({
       query: ({ userId, courseId }: any) => ({
         url: `/api/users/add-course/${userId}`,
@@ -92,4 +100,5 @@ export const {
   useToggleBlockUserMutation,
   useSetToVerifiedMutation,
   useAddPurchasedCourseMutation,
+  useRemovePurchasedCourseMutation,
 } = userApi;
