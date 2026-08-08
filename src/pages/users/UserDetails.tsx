@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "../../Layout";
 import clsx from "clsx";
@@ -11,7 +11,9 @@ import {
   ShieldCheck,
   Trash2,
   BadgeCheck,
-  X,
+  CalendarClock,
+  CalendarPlus,
+  CalendarX,
 } from "lucide-react";
 import {
   useDeleteUserMutation,
@@ -19,11 +21,16 @@ import {
   useGetUsersQuery,
   useToggleBlockUserMutation,
   useSetToVerifiedMutation,
-  useAddPurchasedCourseMutation,
-  useRemovePurchasedCourseMutation,
+  useSubscribeUserMutation,
+  useCancelSubscriptionMutation,
 } from "../../redux/queries/userApi";
-import { useGetAllCoursesQuery } from "../../redux/queries/productApi";
 import Badge from "../../components/Badge";
+import {
+  SUBSCRIPTION_MONTHS,
+  formatSubscriptionDate,
+  isSubscriptionActive,
+  subscriptionDaysLeft,
+} from "../../lib/subscription";
 import {
   Dialog,
   DialogContent,
@@ -41,19 +48,11 @@ function UserDetails() {
   const language = useSelector((state: any) => state.language.lang); // 'ar' | 'en'
   const dir = language === "ar" ? "rtl" : "ltr";
 
-  // Add / Remove purchased course
-  const [selectedCourse, setSelectedCourse] = useState("");
-  const [isAddingAll, setIsAddingAll] = useState(false);
-  const [removingCourseId, setRemovingCourseId] = useState<string | null>(null);
+  // Subscription (grants access to every paid course while it lasts)
+  const [months, setMonths] = useState<number>(SUBSCRIPTION_MONTHS);
 
-  const [addPurchasedCourse] = useAddPurchasedCourseMutation();
-  const [removePurchasedCourse] = useRemovePurchasedCourseMutation();
-
-  const { data: allCourses } = useGetAllCoursesQuery(undefined);
-
-  const isPaidCourses = useMemo(() => {
-    return allCourses?.filter((c: any) => c.isPaid) ?? [];
-  }, [allCourses]);
+  const [subscribeUser, { isLoading: loadingSubscribe }] = useSubscribeUserMutation();
+  const [cancelSubscription, { isLoading: loadingCancel }] = useCancelSubscriptionMutation();
 
   const [toggleBlockUser] = useToggleBlockUserMutation();
   const [setToVerified] = useSetToVerifiedMutation();
@@ -73,13 +72,26 @@ function UserDetails() {
       title: "User Details",
       back: "Back",
       personal: "Personal Information",
-      purchased: "Purchased Courses",
-      addCourse: "Add Purchased Course",
-      select: "Select a course",
-      add: "Add",
-      addAll: "Add all paid courses",
-      adding: "Adding...",
-      removing: "Removing...",
+      subscription: "Subscription",
+      subActive: "Active",
+      subExpired: "Expired",
+      subNone: "Never subscribed",
+      startedAt: "Started",
+      expiresAt: "Expires",
+      daysLeft: "Days left",
+      months: "Months",
+      subscribe: "Subscribe",
+      extend: "Extend",
+      renew: "Renew",
+      cancelSub: "Cancel subscription",
+      subscribing: "Saving...",
+      canceling: "Canceling...",
+      subscribed: "Subscription updated successfully",
+      subError: "Error updating subscription",
+      canceled: "Subscription canceled",
+      cancelError: "Error canceling subscription",
+      extendHint: "Renewing early adds the new months on top of the remaining time.",
+      noSubscription: "This user has no access to paid courses.",
       deleteUser: "Delete User",
       delete: "Delete",
       cancel: "Cancel",
@@ -97,26 +109,31 @@ function UserDetails() {
       username: "Username",
       name: "Name",
       email: "Email",
-      noCourses: "No courses purchased yet.",
-      paidCount: "Paid courses",
-      purchasedCount: "Purchased",
-      noPaid: "No paid courses to add",
-      addedCourse: "Course added successfully",
-      addError: "Error adding course",
-      removedCourse: "Course removed successfully",
-      removeError: "Error removing course",
     },
     ar: {
       title: "تفاصيل المستخدم",
       back: "رجوع",
       personal: "المعلومات الشخصية",
-      purchased: "الدورات المشتراة",
-      addCourse: "إضافة دورة للمستخدم",
-      select: "اختر دورة",
-      add: "إضافة",
-      addAll: "إضافة كل الدورات المدفوعة",
-      adding: "جارٍ الإضافة...",
-      removing: "جارٍ الحذف...",
+      subscription: "الاشتراك",
+      subActive: "نشط",
+      subExpired: "منتهي",
+      subNone: "لم يشترك من قبل",
+      startedAt: "بدأ في",
+      expiresAt: "ينتهي في",
+      daysLeft: "الأيام المتبقية",
+      months: "الأشهر",
+      subscribe: "تفعيل الاشتراك",
+      extend: "تمديد",
+      renew: "تجديد",
+      cancelSub: "إلغاء الاشتراك",
+      subscribing: "جارٍ الحفظ...",
+      canceling: "جارٍ الإلغاء...",
+      subscribed: "تم تحديث الاشتراك بنجاح",
+      subError: "خطأ في تحديث الاشتراك",
+      canceled: "تم إلغاء الاشتراك",
+      cancelError: "خطأ في إلغاء الاشتراك",
+      extendHint: "التجديد المبكر يضيف الأشهر الجديدة فوق المدة المتبقية.",
+      noSubscription: "لا يملك هذا المستخدم صلاحية الوصول للدورات المدفوعة.",
       deleteUser: "حذف المستخدم",
       delete: "حذف",
       cancel: "إلغاء",
@@ -134,36 +151,33 @@ function UserDetails() {
       username: "اسم المستخدم",
       name: "الاسم",
       email: "البريد الإلكتروني",
-      noCourses: "لم يتم شراء أي دورة بعد.",
-      paidCount: "دورات مدفوعة",
-      purchasedCount: "مشتراة",
-      noPaid: "لا توجد دورات مدفوعة لإضافتها",
-      addedCourse: "تمت إضافة الدورة بنجاح",
-      addError: "خطأ بإضافة الدورة",
-      removedCourse: "تمت إزالة الدورة بنجاح",
-      removeError: "خطأ أثناء إزالة الدورة",
     },
   };
 
   const t = labels[language];
 
-  const handleRemoveCourse = async (courseId: string) => {
-    if (removingCourseId === courseId) return;
+  const subscription = user?.subscription;
+  const subActive = isSubscriptionActive(subscription);
+  const subExpired = Boolean(subscription?.expiresAt) && !subActive;
+  const daysLeft = subscriptionDaysLeft(subscription);
 
-    setRemovingCourseId(courseId);
-
+  const handleSubscribe = async () => {
     try {
-      await removePurchasedCourse({
-        userId: userID,
-        courseId,
-      }).unwrap();
-
-      toast.success(t.removedCourse);
+      await subscribeUser({ userId: userID, months }).unwrap();
+      toast.success(t.subscribed);
       refetchUser();
     } catch (err: any) {
-      toast.error(err?.data?.message || t.removeError);
-    } finally {
-      setRemovingCourseId(null);
+      toast.error(err?.data?.message || t.subError);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    try {
+      await cancelSubscription(userID).unwrap();
+      toast.success(t.canceled);
+      refetchUser();
+    } catch (err: any) {
+      toast.error(err?.data?.message || t.cancelError);
     }
   };
 
@@ -202,59 +216,6 @@ function UserDetails() {
       toast.error(err?.data?.message || (language === "ar" ? "حدث خطأ" : "Error"));
     }
   };
-
-  const handleAddCourse = async () => {
-    if (!selectedCourse) return;
-    try {
-      await addPurchasedCourse({ userId: userID, courseId: selectedCourse }).unwrap();
-      toast.success(t.addedCourse);
-      setSelectedCourse("");
-      refetchUser();
-    } catch (error: any) {
-      toast.error(error?.data?.message || t.addError);
-    }
-  };
-
-  const handleAddAllCourses = async () => {
-    if (!isPaidCourses?.length) {
-      toast.info(t.noPaid);
-      return;
-    }
-
-    setIsAddingAll(true);
-
-    try {
-      const tasks = isPaidCourses.map((course: any) =>
-        addPurchasedCourse({ userId: userID, courseId: course._id }).unwrap()
-      );
-
-      const results = await Promise.allSettled(tasks);
-      const successCount = results.filter((r) => r.status === "fulfilled").length;
-      const failCount = results.filter((r) => r.status === "rejected").length;
-
-      if (failCount === 0) {
-        toast.success(
-          language === "ar"
-            ? `تمت إضافة كل الدورات (${successCount}) بنجاح`
-            : `All courses added successfully (${successCount})`
-        );
-      } else {
-        toast.warning(
-          language === "ar"
-            ? `تمت إضافة (${successCount}) وفشل (${failCount})`
-            : `Added (${successCount}) and failed (${failCount})`
-        );
-      }
-
-      await refetchUser();
-    } catch (error: any) {
-      toast.error(error?.data?.message || (language === "ar" ? "حدث خطأ" : "Something went wrong"));
-    } finally {
-      setIsAddingAll(false);
-    }
-  };
-
-  const purchasedCount = user?.purchasedCourses?.length || 0;
 
   return (
     <Layout>
@@ -396,83 +357,111 @@ function UserDetails() {
             </div>
           </div>
 
-          {/* Purchased Courses */}
+          {/* Subscription */}
           <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900">{t.purchased}</h2>
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900">
+                {t.subscription}
+              </h2>
 
               <Badge icon={false} className="px-3 py-1.5 rounded-full">
-                <span className="font-bold">{purchasedCount}</span>
+                <span
+                  className={clsx(
+                    "font-bold",
+                    subActive ? "text-emerald-700" : subExpired ? "text-rose-700" : "text-gray-600"
+                  )}>
+                  {subActive ? t.subActive : subExpired ? t.subExpired : t.subNone}
+                </span>
               </Badge>
             </div>
 
-            {user?.purchasedCourses?.length ? (
-              <div className="flex flex-wrap gap-2">
-                {user.purchasedCourses.map((course: any) => (
-                  <div
-                    key={course._id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 pl-3 pr-2 py-1 text-sm font-semibold text-gray-900 group">
-                    <span>{course.code || course.title || "Course"}</span>
+            {subscription?.expiresAt ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-bold text-gray-500">{t.startedAt}</p>
+                  <p className="mt-1 font-extrabold text-gray-900">
+                    {formatSubscriptionDate(subscription.startedAt, language)}
+                  </p>
+                </div>
 
-                    <button
-                      onClick={() => handleRemoveCourse(course._id)}
-                      disabled={removingCourseId === course._id}
-                      className="rounded-full p-1 text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-50"
-                      title={language === "ar" ? "إزالة الدورة" : "Remove course"}>
-                      {removingCourseId === course._id ? (
-                        <Loader2Icon className="size-4 animate-spin" />
-                      ) : (
-                        <X className="size-4" />
-                      )}
-                    </button>
-                  </div>
-                ))}
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-bold text-gray-500">{t.expiresAt}</p>
+                  <p
+                    className={clsx(
+                      "mt-1 font-extrabold",
+                      subActive ? "text-gray-900" : "text-rose-700"
+                    )}>
+                    {formatSubscriptionDate(subscription.expiresAt, language)}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-bold text-gray-500">{t.daysLeft}</p>
+                  <p className="mt-1 font-extrabold text-gray-900">{daysLeft}</p>
+                </div>
               </div>
             ) : (
-              <p className="text-gray-500 text-sm italic">{t.noCourses}</p>
+              <p className="text-gray-500 text-sm italic">{t.noSubscription}</p>
             )}
-          </div>
 
-          {/* Add Purchased Course */}
-          <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-            <h2 className="text-base sm:text-lg font-extrabold text-gray-900 mb-4">
-              {t.addCourse}
-            </h2>
+            <Separator className="my-5 bg-black/10" />
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <select
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
-                className="w-full sm:flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-300">
-                <option value="">{t.select}</option>
-                {isPaidCourses?.map((course: any) => (
-                  <option key={course._id} value={course._id}>
-                    {course.code || course.title || "Course"}
-                  </option>
-                ))}
-              </select>
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+              <div className="w-full sm:w-40">
+                <label className="text-xs font-bold text-gray-500">{t.months}</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={24}
+                  value={months}
+                  onChange={(e) => setMonths(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-gray-300 focus:ring-1 focus:ring-gray-300"
+                />
+              </div>
 
               <Button
-                disabled={!selectedCourse}
-                onClick={handleAddCourse}
-                className="bg-gray-900 hover:bg-black text-white font-bold rounded-xl min-w-[100px]">
-                {t.add}
-              </Button>
-
-              <Button
-                disabled={isAddingAll || !isPaidCourses.length}
-                onClick={handleAddAllCourses}
-                className="bg-gray-900 hover:bg-black text-white font-bold rounded-xl min-w-[180px]">
-                {isAddingAll ? (
+                disabled={loadingSubscribe || months < 1 || months > 24}
+                onClick={handleSubscribe}
+                className="bg-gray-900 hover:bg-black text-white font-bold rounded-xl min-w-[170px]">
+                {loadingSubscribe ? (
                   <span className="inline-flex items-center gap-2">
                     <Loader2Icon className="animate-spin size-4" />
-                    {t.adding}
+                    {t.subscribing}
                   </span>
                 ) : (
-                  t.addAll
+                  <span className="inline-flex items-center gap-2">
+                    {subActive ? (
+                      <CalendarPlus className="size-4" />
+                    ) : (
+                      <CalendarClock className="size-4" />
+                    )}
+                    {subActive ? t.extend : subExpired ? t.renew : t.subscribe}
+                  </span>
                 )}
               </Button>
+
+              {subActive && (
+                <Button
+                  disabled={loadingCancel}
+                  onClick={handleCancelSubscription}
+                  variant="destructive"
+                  className="bg-rose-500 hover:bg-rose-600 font-bold rounded-xl min-w-[170px]">
+                  {loadingCancel ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2Icon className="animate-spin size-4" />
+                      {t.canceling}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      <CalendarX className="size-4" />
+                      {t.cancelSub}
+                    </span>
+                  )}
+                </Button>
+              )}
             </div>
+
+            {subActive && <p className="mt-3 text-xs text-gray-500">{t.extendHint}</p>}
           </div>
         </div>
       )}

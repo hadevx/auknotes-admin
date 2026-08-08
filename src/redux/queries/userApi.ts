@@ -25,6 +25,7 @@ const userApi = api.injectEndpoints({
       query: (userId: any) => ({
         url: `/api/users/${userId}`,
       }),
+      providesTags: ["User"],
     }),
     logout: builder.mutation({
       query: () => ({
@@ -63,27 +64,26 @@ const userApi = api.injectEndpoints({
         method: "PATCH",
       }),
     }),
-    addPurchasedCourse: builder.mutation({
-      query: ({ userId, courseId }: any) => ({
-        url: `/api/users/add-course/${userId}`,
-        method: "PUT",
-        body: { courseId },
+    subscribeUser: builder.mutation({
+      query: ({ userId, months }: any) => ({
+        url: `/api/users/${userId}/subscribe`,
+        method: "POST",
+        body: months ? { months } : {},
       }),
+      invalidatesTags: ["User"],
     }),
-    removePurchasedCourse: builder.mutation({
-      query: ({ userId, courseId }: any) => ({
-        url: `/api/users/remove-course/${userId}`,
-        method: "PUT",
-        body: { courseId },
+    cancelSubscription: builder.mutation({
+      query: (userId: any) => ({
+        url: `/api/users/${userId}/cancel-subscription`,
+        method: "POST",
       }),
+      invalidatesTags: ["User"],
     }),
-
-    addAllCourses: builder.mutation({
-      query: ({ userId, courseId }: any) => ({
-        url: `/api/users/add-course/${userId}`,
-        method: "PUT",
-        body: { courseId },
+    getActiveSubscribers: builder.query({
+      query: () => ({
+        url: `/api/users/subscription/active`,
       }),
+      providesTags: ["User"],
     }),
   }),
 });
@@ -99,6 +99,7 @@ export const {
   useGetGovernorateQuery,
   useToggleBlockUserMutation,
   useSetToVerifiedMutation,
-  useAddPurchasedCourseMutation,
-  useRemovePurchasedCourseMutation,
+  useSubscribeUserMutation,
+  useCancelSubscriptionMutation,
+  useGetActiveSubscribersQuery,
 } = userApi;

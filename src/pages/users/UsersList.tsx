@@ -21,6 +21,7 @@ import Loader from "../../components/Loader";
 import { useSelector } from "react-redux";
 import Paginate from "@/components/Paginate";
 import { toast } from "react-toastify";
+import { formatSubscriptionDate, isSubscriptionActive } from "../../lib/subscription";
 
 type SortKey = "newest" | "oldest" | "name" | "email";
 // type FilterKey = "all" | "purchased" | "verified" | "admin";
@@ -32,17 +33,18 @@ function Customers() {
     en: {
       users: "Users",
       totalUsers: "users",
-      purchasedUsers: "purchased",
+      purchasedUsers: "subscribed",
       searchPlaceholder: "Search users by email or name",
       name: "Name",
       email: "Email",
       registeredIn: "Registered",
       noUsersFound: "No users found.",
-      purchased: "Purchased",
+      purchased: "Subscribed",
       all: "All",
       verified: "Verified",
       admin: "Admin",
-      premium: "Purchased",
+      premium: "Subscribed",
+      expiresAt: "Expires",
       newest: "Newest",
       oldest: "Oldest",
       sortName: "Name",
@@ -71,6 +73,7 @@ function Customers() {
       verified: "موثّق",
       admin: "أدمن",
       premium: "مشترك",
+      expiresAt: "ينتهي في",
       newest: "الأحدث",
       oldest: "الأقدم",
       sortName: "الاسم",
@@ -322,8 +325,16 @@ function Customers() {
                           <td className="py-3 hidden md:table-cell">{user.email}</td>
 
                           <td className="py-3">
-                            {user?.purchasedCourses?.length > 0 ? (
-                              <img src="/premium.png" className="size-5" alt="premium" />
+                            {isSubscriptionActive(user?.subscription) ? (
+                              <img
+                                src="/premium.png"
+                                className="size-5"
+                                alt="subscribed"
+                                title={`${t.expiresAt}: ${formatSubscriptionDate(
+                                  user?.subscription?.expiresAt,
+                                  language
+                                )}`}
+                              />
                             ) : (
                               "--"
                             )}
@@ -352,7 +363,7 @@ function Customers() {
                 {processedUsers.length > 0 ? (
                   <>
                     {processedUsers.map((user: any) => {
-                      const isPurchased = (user?.purchasedCourses?.length || 0) > 0;
+                      const isPurchased = isSubscriptionActive(user?.subscription);
 
                       return (
                         <button
